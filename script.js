@@ -96,10 +96,41 @@ function saveAsPDF() {
 }
 
 function decodeInvoice(data) {
-  const decodedData = atob(data); // فك تشفير البيانات من Base64
-  const parsedData = JSON.parse(decodedData); // تحويل النص إلى كائن JSON
+  // التحقق من إذا كانت البيانات مشفرة باستخدام Base64
+  try {
+    // إذا كانت البيانات مشفرة بـ Base64
+    if (isBase64(data)) {
+      const decodedData = atob(data); // فك تشفير البيانات
+      const parsedData = JSON.parse(decodedData); // تحويل النص إلى كائن JSON
+      return parseInvoiceData(parsedData);
+    } else {
+      // إذا كانت البيانات غير مشفرة، التعامل معها كنص عادي
+      const parsedData = JSON.parse(data);
+      return parseInvoiceData(parsedData);
+    }
+  } catch (error) {
+    console.error("خطأ في فك التشفير أو معالجة البيانات: ", error);
+    return {
+      date: "غير متوفر",
+      amountBeforeTax: "غير متوفر",
+      tax: "غير متوفر",
+      totalAmount: "غير متوفر",
+      invoiceNumber: "غير متوفر",
+      commercialName: "غير متوفر",
+      taxNumber: "غير متوفر"
+    };
+  }
+}
 
-  // التحقق من وجود البيانات الخاصة بالاسم التجاري والرقم الضريبي
+function isBase64(str) {
+  try {
+    return btoa(atob(str)) === str;
+  } catch (e) {
+    return false;
+  }
+}
+
+function parseInvoiceData(parsedData) {
   const invoiceData = {
     date: parsedData.date || "غير متوفر",
     amountBeforeTax: parsedData.amountBeforeTax || "غير متوفر",
