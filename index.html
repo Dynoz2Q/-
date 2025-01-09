@@ -5,172 +5,127 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>قارئ الفواتير</title>
   <style>
-    /* تعيين الخلفية والألوان */
     body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f4f7fc;
-      margin: 0;
-      padding: 0;
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f9f9f9;
       text-align: center;
     }
 
-    h1 {
-      color: #2b2d42;
-      font-size: 2.5rem;
-      margin-top: 30px;
-      animation: fadeIn 1s ease-out;
-    }
-
-    /* تأثير الأنيميشن على العناوين */
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
-    }
-
-    /* تنسيق الأزرار */
     button {
       background-color: #4CAF50;
       color: white;
       border: none;
-      border-radius: 8px;
-      padding: 12px 20px;
+      border-radius: 5px;
+      padding: 10px 15px;
       margin: 10px;
       cursor: pointer;
-      font-size: 18px;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      font-size: 16px;
+      transition: background-color 0.3s ease;
     }
 
     button:hover {
       background-color: #45a049;
-      transform: scale(1.1);
     }
 
-    button:active {
-      transform: scale(1);
-      background-color: #3e8e41;
-    }
-
-    /* تحسين الجدول */
     table {
       width: 90%;
       margin: 20px auto;
       border-collapse: collapse;
-      background-color: #ffffff;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      border-radius: 10px;
-      overflow: hidden;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     th, td {
-      padding: 12px;
+      padding: 10px;
       text-align: center;
-      border-bottom: 1px solid #ddd;
-      font-size: 16px;
+      border: 1px solid #ddd;
     }
 
     th {
-      background-color: #4CAF50;
-      color: white;
+      background-color: #f2f2f2;
     }
 
-    tr:nth-child(even) {
+    #invoiceTable tbody tr:nth-child(even) {
       background-color: #f9f9f9;
     }
 
-    tr:hover {
+    #invoiceTable tbody tr:hover {
       background-color: #f1f1f1;
-      cursor: pointer;
     }
 
-    /* تنسيق الأيقونات */
-    #icons {
-      display: flex;
-      justify-content: center;
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: #4CAF50;
+      margin-bottom: 20px;
+    }
+
+    .button-container {
       margin-top: 20px;
     }
 
-    #icons button {
-      margin: 0 10px;
-      font-size: 24px;
-      padding: 15px;
-      border-radius: 50%;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
-    }
-
-    #icons button:hover {
-      background-color: #45a049;
-      transform: scale(1.2);
-    }
-
-    /* إضافة تأثيرات تحميل الملفات */
-    input[type="file"] {
+    .file-input {
       display: none;
     }
-
-    .file-label {
-      padding: 12px 25px;
-      background-color: #4CAF50;
-      color: white;
-      font-size: 18px;
-      border-radius: 8px;
-      cursor: pointer;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
+    
+    .preview-container {
+      margin-top: 15px;
+      display: flex;
+      justify-content: center;
     }
 
-    .file-label:hover {
-      background-color: #45a049;
-      transform: scale(1.1);
+    .preview-container img {
+      max-width: 100%;
+      max-height: 300px;
     }
-
   </style>
 </head>
 <body>
-  <h1>📋 قارئ الفواتير</h1>
+  <div class="container">
+    <h1>📋 قارئ الفواتير</h1>
 
-  <!-- أزرار التحكم -->
-  <div id="icons">
-    <button id="addBarcode">📎</button>
-    <button id="scanBarcode">📸</button>
-    <label for="imageInput" class="file-label">رفع صورة</label>
+    <div class="button-container">
+      <!-- زر لرفع صورة باركود -->
+      <button id="addBarcode">📎 إضافة باركود</button>
+      <input type="file" id="imageInput" class="file-input" accept="image/*">
+
+      <!-- زر لتصوير باركود -->
+      <button id="scanBarcode">📸 تصوير باركود</button>
+
+      <!-- أزرار لتحميل الفواتير بصيغ مختلفة -->
+      <button id="downloadExcel">📥 تحميل Excel</button>
+      <button id="downloadPDF">📄 تحميل PDF</button>
+    </div>
+
+    <!-- عرض معاينة للصورة التي يتم رفعها -->
+    <div class="preview-container" id="previewContainer"></div>
+
+    <!-- جدول عرض الفواتير -->
+    <table>
+      <thead>
+        <tr>
+          <th>تسلسل</th>
+          <th>الاسم التجاري</th>
+          <th>الرقم الضريبي</th>
+          <th>التاريخ</th>
+          <th>قبل الضريبة</th>
+          <th>الضريبة</th>
+          <th>الإجمالي</th>
+          <th>رقم الفاتورة</th>
+          <th>⚙️ تحرير</th>
+        </tr>
+      </thead>
+      <tbody id="invoiceTable">
+        <!-- البيانات ستضاف هنا -->
+      </tbody>
+    </table>
   </div>
 
-  <!-- مدخلات الملفات -->
-  <input type="file" id="imageInput" accept="image/*">
-
-  <button id="downloadExcel">📥 تحميل Excel</button>
-  <button id="downloadPDF">📄 تحميل PDF</button>
-
-  <!-- جدول الفواتير -->
-  <table>
-    <thead>
-      <tr>
-        <th>تسلسل</th>
-        <th>الاسم التجاري</th>
-        <th>الرقم الضريبي</th>
-        <th>التاريخ</th>
-        <th>قبل الضريبة</th>
-        <th>الضريبة</th>
-        <th>الإجمالي</th>
-        <th>رقم الفاتورة</th>
-        <th>⚙️ تحرير</th>
-      </tr>
-    </thead>
-    <tbody id="invoiceTable">
-      <!-- البيانات ستضاف هنا -->
-    </tbody>
-  </table>
-
-  <!-- تضمين الجافا سكريبت -->
+  <!-- تحميل السكربت الجافا سكريبت -->
   <script type="module" src="script.js"></script>
 </body>
 </html>
