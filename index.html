@@ -54,24 +54,6 @@
       background-color: #f1f1f1;
     }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    h1 {
-      color: #4CAF50;
-      margin-bottom: 20px;
-    }
-
-    .button-container {
-      margin-top: 20px;
-    }
-
-    .file-input {
-      display: none;
-    }
-
     .scanner-container {
       position: relative;
       width: 100%;
@@ -94,17 +76,6 @@
       height: 250px;
       border: 3px solid rgba(255, 255, 255, 0.8);
       box-sizing: border-box;
-    }
-
-    .scanner-box::before {
-      content: 'ضع الباركود داخل المربع';
-      position: absolute;
-      top: -20px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: white;
-      font-size: 14px;
-      text-align: center;
     }
   </style>
 </head>
@@ -170,6 +141,25 @@
       invoices.push(data);
     }
 
+    function decodeInvoice(data) {
+      try {
+        const decoded = atob(data); // فك التشفير Base64
+        const fields = decoded.split("|");
+        return {
+          tradeName: fields[0],
+          taxNumber: fields[1],
+          date: fields[2],
+          amountBeforeTax: fields[3],
+          tax: fields[4],
+          totalAmount: fields[5],
+          invoiceNumber: fields[6],
+        };
+      } catch (error) {
+        alert("فشل في قراءة البيانات!");
+        return null;
+      }
+    }
+
     document.getElementById("addBarcode").addEventListener("click", () => {
       document.getElementById("imageInput").click();
     });
@@ -179,7 +169,7 @@
       if (file) {
         const qrScanner = new QrScanner(file, (result) => {
           const data = decodeInvoice(result.data);
-          addInvoice(data);
+          if (data) addInvoice(data);
         }, {
           returnDetailedScanResult: true,
         });
@@ -194,21 +184,12 @@
 
       const qrScanner = new QrScanner(video, (result) => {
         const data = decodeInvoice(result.data);
-        addInvoice(data);
+        if (data) addInvoice(data);
         qrScanner.stop();
         scannerContainer.style.display = "none";
       });
 
       qrScanner.start();
-    });
-
-    document.getElementById("saveButton").addEventListener("click", () => {
-      const choice = confirm("هل تريد حفظ الملف كـ Excel؟ اضغط إلغاء لحفظه كـ PDF.");
-      if (choice) {
-        saveAsExcel();
-      } else {
-        saveAsPDF();
-      }
     });
 
     document.addEventListener("click", (event) => {
@@ -218,6 +199,15 @@
           cell.contentEditable = cell.isContentEditable ? "false" : "true";
         });
         event.target.textContent = row.querySelector("td[contenteditable]").isContentEditable ? "✔️ حفظ" : "🖊️ تحرير";
+      }
+    });
+
+    document.getElementById("saveButton").addEventListener("click", () => {
+      const choice = confirm("هل تريد حفظ الملف كـ Excel؟ اضغط إلغاء لحفظه كـ PDF.");
+      if (choice) {
+        saveAsExcel();
+      } else {
+        saveAsPDF();
       }
     });
 
@@ -249,11 +239,6 @@
       link.href = URL.createObjectURL(blob);
       link.download = "invoices.pdf";
       link.click();
-    }
-
-    function decodeInvoice(data) {
-      const decodedData = atob(data); // فك تشفير Base64
-      return JSON.parse(decodedData);
     }
   </script>
 </body>
