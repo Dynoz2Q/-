@@ -46,85 +46,23 @@
       background-color: #f2f2f2;
     }
 
-    #invoiceTable tbody tr:nth-child(even) {
+    tbody tr:nth-child(even) {
       background-color: #f9f9f9;
     }
 
-    #invoiceTable tbody tr:hover {
+    tbody tr:hover {
       background-color: #f1f1f1;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    h1 {
-      color: #4CAF50;
-      margin-bottom: 20px;
-    }
-
-    .button-container {
-      margin-top: 20px;
-    }
-
-    .file-input {
-      display: none;
-    }
-
-    .scanner-container {
-      position: relative;
-      width: 100%;
-      max-width: 600px;
-      margin: 0 auto;
-      background-color: black;
-    }
-
-    video {
-      width: 100%;
-      height: auto;
-    }
-
-    .scanner-box {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 250px;
-      height: 250px;
-      border: 3px solid rgba(255, 255, 255, 0.8);
-      box-sizing: border-box;
-    }
-
-    .scanner-box::before {
-      content: 'ضع الباركود داخل المربع';
-      position: absolute;
-      top: -20px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: white;
-      font-size: 14px;
-      text-align: center;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>📋 قارئ الفواتير</h1>
-
     <div class="button-container">
       <button id="scanBarcode">📸 تصوير باركود</button>
       <button id="addBarcode">📁 إضافة باركود</button>
       <input type="file" id="imageInput" class="file-input" accept="image/*">
-      <button id="editButton">✏️ تحرير</button>
-      <button id="saveButton">💾 حفظ</button>
     </div>
-
-    <div class="scanner-container" id="scannerContainer" style="display: none;">
-      <video id="camera"></video>
-      <div class="scanner-box"></div>
-    </div>
-
     <table>
       <thead>
         <tr>
@@ -144,6 +82,77 @@
     </table>
   </div>
 
-  <script type="module" src="script.js"></script>
+  <script type="module">
+    import QrScanner from "https://unpkg.com/qr-scanner/qr-scanner.min.js";
+
+    let sequence = 1;
+
+    function decodeInvoice(base64Data) {
+      try {
+        const decoded = atob(base64Data);
+        const parts = decoded.split("\x01").join("").split("\x02");
+
+        return {
+          tradeName: parts[1].split(" - ")[1],
+          taxNumber: parts[2].trim(),
+          date: parts[3].trim().split("T")[0],
+          amountBeforeTax: parts[4].trim(),
+          tax: parts[5].trim(),
+          totalAmount: (parseFloat(parts[4]) + parseFloat(parts[5])).toFixed(2),
+          invoiceNumber: sequence++
+        };
+      } catch (error) {
+        console.error("Error decoding invoice:", error);
+        alert("خطأ في فك التشفير. تأكد من أن الكود متوافق مع هيئة الزكاة.");
+        return null;
+      }
+    }
+
+    function addInvoice(data) {
+      const table = document.querySelector("#invoiceTable");
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+        <td>${data.invoiceNumber}</td>
+        <td>${data.tradeName}</td>
+        <td>${data.taxNumber}</td>
+        <td>${data.date}</td>
+        <td>${data.amountBeforeTax}</td>
+        <td>${data.tax}</td>
+        <td>${data.totalAmount}</td>
+        <td>${data.invoiceNumber}</td>
+      `;
+      table.appendChild(row);
+    }
+
+    document.getElementById("scanBarcode").addEventListener("click", () => {
+      const video = document.createElement("video");
+      document.body.appendChild(video);
+
+      const qrScanner = new QrScanner(video, (result) => {
+        const data = decodeInvoice(result.data);
+        if (data) addInvoice(data);
+        qrScanner.stop();
+        video.remove();
+      });
+
+      qrScanner.start();
+    });
+
+    document.getElementById("addBarcode").addEventListener("click", () => {
+      document.getElementById("imageInput").click();
+    });
+
+    document.getElementById("imageInput").addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const qrScanner = new QrScanner(file, (result) => {
+          const data = decodeInvoice(result.data);
+          if (data) addInvoice(data);
+        });
+        qrScanner.scan();
+      }
+    });
+  </script>
 </body>
 </html>
