@@ -4,13 +4,90 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>قارئ الفواتير</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f9f9f9;
+      text-align: center;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 15px;
+      margin: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    table {
+      width: 90%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    #invoiceTable tbody tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    #invoiceTable tbody tr:hover {
+      background-color: #f1f1f1;
+    }
+
+    .scanner-container {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: black;
+    }
+
+    video {
+      width: 100%;
+      height: auto;
+    }
+
+    .scanner-box {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 250px;
+      height: 250px;
+      border: 3px solid rgba(255, 255, 255, 0.8);
+      box-sizing: border-box;
+    }
+  </style>
 </head>
 <body>
   <div>
     <h1>📋 قارئ الفواتير</h1>
     <button id="scanBarcode">📸 تصوير باركود</button>
-    <div id="scannerContainer" style="display: none;">
-      <video id="camera" autoplay></video>
+    <button id="addBarcode">📁 إضافة باركود</button>
+    <input type="file" id="imageInput" style="display: none;" accept="image/*">
+    <div class="scanner-container" id="scannerContainer" style="display: none;">
+      <video id="camera"></video>
+      <div class="scanner-box"></div>
     </div>
     <table>
       <thead>
@@ -18,12 +95,14 @@
           <th>الاسم التجاري</th>
           <th>الرقم الضريبي</th>
           <th>التاريخ</th>
-          <th>المبلغ قبل الضريبة</th>
+          <th>قبل الضريبة</th>
           <th>الضريبة</th>
           <th>الإجمالي</th>
         </tr>
       </thead>
-      <tbody id="invoiceTable"></tbody>
+      <tbody id="invoiceTable">
+        <!-- البيانات -->
+      </tbody>
     </table>
   </div>
 
@@ -32,6 +111,7 @@
 
     const scannerContainer = document.getElementById("scannerContainer");
     const camera = document.getElementById("camera");
+    const imageInput = document.getElementById("imageInput");
     const invoiceTable = document.getElementById("invoiceTable");
 
     document.getElementById("scanBarcode").addEventListener("click", () => {
@@ -49,9 +129,27 @@
       qrScanner.start();
     });
 
+    document.getElementById("addBarcode").addEventListener("click", () => {
+      imageInput.click();
+    });
+
+    imageInput.addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const qrScanner = new QrScanner(file, result => {
+          try {
+            const invoiceData = decodeInvoice(result.data);
+            addInvoiceToTable(invoiceData);
+          } catch (error) {
+            alert("خطأ في قراءة البيانات: " + error.message);
+          }
+        });
+        qrScanner.scan();
+      }
+    });
+
     function decodeInvoice(encodedData) {
-      // فك تشفير البيانات المشفرة
-      const decodedData = atob(encodedData); // تحويل Base64 إلى نص
+      const decodedData = atob(encodedData);
       const fields = decodedData.split("|");
       if (fields.length !== 6) {
         throw new Error("تنسيق الفاتورة غير صحيح.");
