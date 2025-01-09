@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>قارئ الفواتير</title>
+  <title>📋 قارئ الفواتير</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,6 +11,7 @@
       background-color: #f9f9f9;
       text-align: center;
     }
+
     button {
       background-color: #4CAF50;
       color: white;
@@ -22,9 +23,11 @@
       font-size: 16px;
       transition: background-color 0.3s ease;
     }
+
     button:hover {
       background-color: #45a049;
     }
+
     table {
       width: 90%;
       margin: 20px auto;
@@ -32,20 +35,44 @@
       background: white;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
+
     th, td {
       padding: 10px;
       text-align: center;
       border: 1px solid #ddd;
     }
+
     th {
       background-color: #f2f2f2;
     }
+
     #invoiceTable tbody tr:nth-child(even) {
       background-color: #f9f9f9;
     }
+
     #invoiceTable tbody tr:hover {
       background-color: #f1f1f1;
     }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: #4CAF50;
+      margin-bottom: 20px;
+    }
+
+    .button-container {
+      margin-top: 20px;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    /* تأثير مربع الباركود */
     .scanner-container {
       position: relative;
       width: 100%;
@@ -53,10 +80,12 @@
       margin: 0 auto;
       background-color: black;
     }
+
     video {
       width: 100%;
       height: auto;
     }
+
     .scanner-box {
       position: absolute;
       top: 50%;
@@ -67,6 +96,7 @@
       border: 3px solid rgba(255, 255, 255, 0.8);
       box-sizing: border-box;
     }
+
     .scanner-box::before {
       content: 'ضع الباركود داخل المربع';
       position: absolute;
@@ -86,7 +116,7 @@
     <div class="button-container">
       <button id="scanBarcode">📸 تصوير باركود</button>
       <button id="addBarcode">📁 إضافة باركود</button>
-      <input type="file" id="imageInput" class="file-input" accept="image/*" style="display: none;">
+      <input type="file" id="imageInput" class="file-input" accept="image/*">
     </div>
 
     <div class="scanner-container" id="scannerContainer" style="display: none;">
@@ -98,113 +128,24 @@
       <thead>
         <tr>
           <th>تسلسل</th>
-          <th>الاسم التجاري</th>
-          <th>الرقم الضريبي</th>
           <th>التاريخ</th>
           <th>قبل الضريبة</th>
           <th>الضريبة</th>
           <th>الإجمالي</th>
           <th>رقم الفاتورة</th>
+          <th>الاسم التجاري</th>
+          <th>الرقم الضريبي</th>
           <th>تحرير</th>
         </tr>
       </thead>
-      <tbody id="invoiceTable"></tbody>
+      <tbody id="invoiceTable">
+        <!-- البيانات ستضاف هنا -->
+      </tbody>
     </table>
 
-    <button id="saveExcel">💾 حفظ Excel</button>
-    <button id="savePDF">💾 حفظ PDF</button>
+    <button id="saveButton">💾 حفظ</button>
   </div>
 
-  <script type="module">
-    import QrScanner from "https://unpkg.com/qr-scanner/qr-scanner.min.js";
-
-    let sequence = 1;
-    let invoices = [];
-
-    // معالجة فك التشفير 
-    function decodeInvoice(base64Data) {
-      try {
-        const cleanedData = base64Data.trim();
-        const decoded = atob(cleanedData); // فك التشفير باستخدام Base64
-        const parts = decoded.split("\x01").join("").split("\x02");
-
-        return {
-          tradeName: parts[1].split(" - ")[1],
-          taxNumber: parts[2].trim(),
-          date: parts[3].trim().split("T")[0],
-          amountBeforeTax: parts[4].trim(),
-          tax: parts[5].trim(),
-          totalAmount: (parseFloat(parts[4]) + parseFloat(parts[5])).toFixed(2),
-          invoiceNumber: sequence++
-        };
-      } catch (error) {
-        console.error("خطأ في فك التشفير:", error);
-        alert("خطأ في فك التشفير. تأكد من أن الكود متوافق مع هيئة الزكاة.");
-        return null;
-      }
-    }
-
-    // إضافة الفاتورة إلى الجدول
-    function addInvoice(data) {
-      const table = document.querySelector("#invoiceTable");
-      const row = document.createElement("tr");
-
-      row.innerHTML = `
-        <td>${data.invoiceNumber}</td>
-        <td>${data.tradeName}</td>
-        <td>${data.taxNumber}</td>
-        <td>${data.date}</td>
-        <td>${data.amountBeforeTax}</td>
-        <td>${data.tax}</td>
-        <td>${data.totalAmount}</td>
-        <td>${data.invoiceNumber}</td>
-        <td><button onclick="editInvoice(${data.invoiceNumber})">تعديل</button></td>
-      `;
-      table.appendChild(row);
-    }
-
-    function handleBarcodeScan(imageData) {
-      const base64String = imageData.split(',')[1]; // استخراج الـ Base64
-      const invoiceData = decodeInvoice(base64String);
-      if (invoiceData) {
-        addInvoice(invoiceData);
-      }
-    }
-
-    // التعامل مع التصوير بالكاميرا أو الصورة
-    document.getElementById('scanBarcode').addEventListener('click', () => {
-      const scanner = new QrScanner(document.getElementById('camera'), (result) => {
-        handleBarcodeScan(result);
-        scanner.stop();
-        document.getElementById('scannerContainer').style.display = 'none';
-      });
-      scanner.start();
-      document.getElementById('scannerContainer').style.display = 'block';
-    });
-
-    document.getElementById('addBarcode').addEventListener('click', () => {
-      document.getElementById('imageInput').click();
-    });
-
-    document.getElementById('imageInput').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          handleBarcodeScan(event.target.result);
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-
-    // حفظ البيانات بصيغة Excel أو PDF (ليس كل الكود موجود لهذه الوظيفة)
-    document.getElementById('saveExcel').addEventListener('click', () => {
-      alert('حفظ Excel ليس مفعل بعد!');
-    });
-
-    document.getElementById('savePDF').addEventListener('click', () => {
-      alert('حفظ PDF ليس مفعل بعد!');
-    });
-  </script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>
