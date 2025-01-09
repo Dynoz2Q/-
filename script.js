@@ -1,10 +1,8 @@
 import QrScanner from "https://unpkg.com/qr-scanner/qr-scanner.min.js";
 
-// قائمة الفواتير
 let invoices = [];
 let sequence = 1;
 
-// إضافة بيانات الفاتورة
 function addInvoice(data) {
   const table = document.querySelector("#invoiceTable tbody");
   const row = document.createElement("tr");
@@ -20,51 +18,43 @@ function addInvoice(data) {
     <td>${data.invoiceNumber}</td>
     <td><button class="edit">تحرير</button></td>
   `;
-
   table.appendChild(row);
   invoices.push(data);
 
-  // ربط زر التحرير بالحدث
   const editButton = row.querySelector(".edit");
   editButton.addEventListener("click", () => editInvoice(editButton));
 }
 
-// زر "إضافة باركود" لرفع صورة
 document.getElementById("addBarcode").addEventListener("click", () => {
   document.getElementById("imageInput").click();
 });
 
-// قراءة الباركود من صورة
 document.getElementById("imageInput").addEventListener("change", async (event) => {
   const file = event.target.files[0];
   if (file) {
-    const reader = new FileReader();
-    reader.onload = async function() {
-      // قراءة محتوى Base64 من الصورة
-      const base64Image = reader.result.split(',')[1]; // تجاهل البداية "data:image/png;base64,"
-      const qrScanner = new QrScanner(base64Image, (result) => {
-        // افتراضياً تم استخراج بيانات
-        const sampleData = {
-          tradeName: "مؤسسة المثال",
-          taxNumber: "1234567890",
-          date: "2025-01-08",
-          amountBeforeTax: "100",
-          tax: "15",
-          totalAmount: "115",
-          invoiceNumber: result.data || "INV-001"
-        };
-        addInvoice(sampleData);
-      }, { returnDetailedScanResult: true }); // إضافة الخيار لتجنب التحذير
-      qrScanner.scan();
-    }
-    reader.readAsDataURL(file); // قراءة الملف بصيغة Base64
+    const qrScanner = new QrScanner(file, (result) => {
+      const sampleData = {
+        tradeName: "مؤسسة المثال",
+        taxNumber: "1234567890",
+        date: "2025-01-08",
+        amountBeforeTax: "100",
+        tax: "15",
+        totalAmount: "115",
+        invoiceNumber: result.data || "INV-001"
+      };
+      addInvoice(sampleData);
+    }, { returnDetailedScanResult: true });
+    qrScanner.scan();
   }
 });
 
-// زر "تصوير باركود"
 document.getElementById("scanBarcode").addEventListener("click", async () => {
   const video = document.createElement("video");
-  const qrScanner = new QrScanner(video, (result) => {
+  const scannerContainer = document.getElementById("scannerContainer");
+  const scannerBox = document.querySelector(".scanner-box");
+  scannerContainer.style.display = "block"; // إظهار كاميرا الفيديو
+
+  const qrScanner = new QrScanner(video, result => {
     const sampleData = {
       tradeName: "مؤسسة المثال",
       taxNumber: "1234567890",
@@ -74,13 +64,16 @@ document.getElementById("scanBarcode").addEventListener("click", async () => {
       totalAmount: "115",
       invoiceNumber: result.data || "INV-001"
     };
+
+    // إضافة الفاتورة إلى الجدول بعد قراءة الباركود
     addInvoice(sampleData);
-    qrScanner.stop();
-  }, { returnDetailedScanResult: true }); // إضافة الخيار لتجنب التحذير
-  qrScanner.start();
+    qrScanner.stop(); // إيقاف الكاميرا بعد قراءة الكود
+    scannerContainer.style.display = "none"; // إخفاء كاميرا الفيديو بعد الإيقاف
+  });
+
+  qrScanner.start(); // بدء قراءة الكود
 });
 
-// تحميل Excel
 document.getElementById("downloadExcel").addEventListener("click", () => {
   let csvContent = "data:text/csv;charset=utf-8,";
   csvContent += "تسلسل الفاتورة,الاسم التجاري,الرقم الضريبي,التاريخ,الفاتورة قبل الضريبة,الضريبة,الإجمالي بعد الضريبة,رقم الفاتورة\n";
@@ -94,7 +87,6 @@ document.getElementById("downloadExcel").addEventListener("click", () => {
   link.click();
 });
 
-// تحميل PDF
 document.getElementById("downloadPDF").addEventListener("click", () => {
   const pdfContent = invoices.map((invoice) => {
     return `
@@ -113,7 +105,6 @@ document.getElementById("downloadPDF").addEventListener("click", () => {
   link.click();
 });
 
-// تحرير البيانات
 function editInvoice(button) {
   const row = button.parentElement.parentElement;
   const cells = row.querySelectorAll("td");
@@ -130,7 +121,6 @@ function editInvoice(button) {
   button.onclick = () => saveInvoice(button);
 }
 
-// حفظ البيانات بعد التعديل
 function saveInvoice(button) {
   const row = button.parentElement.parentElement;
   const cells = row.querySelectorAll("td");

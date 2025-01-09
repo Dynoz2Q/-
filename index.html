@@ -71,16 +71,42 @@
     .file-input {
       display: none;
     }
-    
-    .preview-container {
-      margin-top: 15px;
-      display: flex;
-      justify-content: center;
+
+    /* تأثير مربع الباركود */
+    .scanner-container {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: black;
     }
 
-    .preview-container img {
-      max-width: 100%;
-      max-height: 300px;
+    #video {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .scanner-box {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 250px;
+      height: 250px;
+      border: 3px solid rgba(255, 255, 255, 0.8);
+      box-sizing: border-box;
+    }
+
+    .scanner-box::before {
+      content: 'ضع الباركود داخل المربع';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-size: 14px;
+      text-align: center;
     }
   </style>
 </head>
@@ -89,22 +115,19 @@
     <h1>📋 قارئ الفواتير</h1>
 
     <div class="button-container">
-      <!-- زر لرفع صورة باركود -->
       <button id="addBarcode">📎 إضافة باركود</button>
       <input type="file" id="imageInput" class="file-input" accept="image/*">
-
-      <!-- زر لتصوير باركود -->
       <button id="scanBarcode">📸 تصوير باركود</button>
-
-      <!-- أزرار لتحميل الفواتير بصيغ مختلفة -->
       <button id="downloadExcel">📥 تحميل Excel</button>
       <button id="downloadPDF">📄 تحميل PDF</button>
     </div>
 
-    <!-- عرض معاينة للصورة التي يتم رفعها -->
-    <div class="preview-container" id="previewContainer"></div>
+    <!-- عرض الكاميرا -->
+    <div class="scanner-container" id="scannerContainer" style="display: none;">
+      <video id="video" autoplay></video>
+      <div class="scanner-box"></div>
+    </div>
 
-    <!-- جدول عرض الفواتير -->
     <table>
       <thead>
         <tr>
