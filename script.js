@@ -40,18 +40,24 @@ document.getElementById("imageInput").addEventListener("change", async (event) =
   const file = event.target.files[0];
   if (file) {
     const qrScanner = new QrScanner(file, (result) => {
-      // افتراضياً تم استخراج بيانات
-      const sampleData = {
-        tradeName: "مؤسسة المثال",
-        taxNumber: "1234567890",
-        date: "2025-01-08",
-        amountBeforeTax: "100",
-        tax: "15",
-        totalAmount: "115",
-        invoiceNumber: result.data || "INV-001"
-      };
-      addInvoice(sampleData);
-    }, { returnDetailedScanResult: true }); // إضافة الخيار لتجنب التحذير
+      // فك تشفير البيانات إذا كانت مشفرة بـ Base64
+      const decodedData = atob(result.data); // فك التشفير
+      try {
+        const parsedData = JSON.parse(decodedData); // تحويل النص إلى JSON
+        const sampleData = {
+          tradeName: parsedData.tradeName || "مؤسسة المثال",
+          taxNumber: parsedData.taxNumber || "1234567890",
+          date: parsedData.date || "2025-01-08",
+          amountBeforeTax: parsedData.amountBeforeTax || "100",
+          tax: parsedData.tax || "15",
+          totalAmount: parsedData.totalAmount || "115",
+          invoiceNumber: parsedData.invoiceNumber || "INV-001"
+        };
+        addInvoice(sampleData);
+      } catch (error) {
+        console.error("خطأ في فك تشفير البيانات:", error);
+      }
+    }, { returnDetailedScanResult: true });
     qrScanner.scan();
   }
 });
@@ -60,18 +66,25 @@ document.getElementById("imageInput").addEventListener("change", async (event) =
 document.getElementById("scanBarcode").addEventListener("click", async () => {
   const video = document.createElement("video");
   const qrScanner = new QrScanner(video, (result) => {
-    const sampleData = {
-      tradeName: "مؤسسة المثال",
-      taxNumber: "1234567890",
-      date: "2025-01-08",
-      amountBeforeTax: "100",
-      tax: "15",
-      totalAmount: "115",
-      invoiceNumber: result.data || "INV-001"
-    };
-    addInvoice(sampleData);
-    qrScanner.stop();
-  }, { returnDetailedScanResult: true }); // إضافة الخيار لتجنب التحذير
+    // فك تشفير البيانات إذا كانت مشفرة بـ Base64
+    const decodedData = atob(result.data); // فك التشفير
+    try {
+      const parsedData = JSON.parse(decodedData); // تحويل النص إلى JSON
+      const sampleData = {
+        tradeName: parsedData.tradeName || "مؤسسة المثال",
+        taxNumber: parsedData.taxNumber || "1234567890",
+        date: parsedData.date || "2025-01-08",
+        amountBeforeTax: parsedData.amountBeforeTax || "100",
+        tax: parsedData.tax || "15",
+        totalAmount: parsedData.totalAmount || "115",
+        invoiceNumber: parsedData.invoiceNumber || "INV-001"
+      };
+      addInvoice(sampleData);
+      qrScanner.stop();
+    } catch (error) {
+      console.error("خطأ في فك تشفير البيانات:", error);
+    }
+  }, { returnDetailedScanResult: true });
   qrScanner.start();
 });
 
