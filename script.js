@@ -9,13 +9,14 @@ function addInvoice(data) {
 
   row.innerHTML = `
     <td>${sequence++}</td>
-    <td>${data.tradeName}</td>
-    <td>${data.taxNumber}</td>
-    <td>${data.date}</td>
-    <td>${data.amountBeforeTax}</td>
-    <td>${data.tax}</td>
-    <td>${data.totalAmount}</td>
-    <td>${data.invoiceNumber}</td>
+    <td contenteditable="false">${data.tradeName}</td>
+    <td contenteditable="false">${data.taxNumber}</td>
+    <td contenteditable="false">${data.date}</td>
+    <td contenteditable="false">${data.amountBeforeTax}</td>
+    <td contenteditable="false">${data.tax}</td>
+    <td contenteditable="false">${data.totalAmount}</td>
+    <td contenteditable="false">${data.invoiceNumber}</td>
+    <td><button class="editButton">🖊️ تحرير</button></td>
   `;
   table.appendChild(row);
   invoices.push(data);
@@ -31,6 +32,8 @@ document.getElementById("imageInput").addEventListener("change", async (event) =
     const qrScanner = new QrScanner(file, (result) => {
       const data = decodeInvoice(result.data);
       addInvoice(data);
+    }, {
+      returnDetailedScanResult: true,
     });
     qrScanner.scan();
   }
@@ -57,6 +60,16 @@ document.getElementById("saveButton").addEventListener("click", () => {
     saveAsExcel();
   } else {
     saveAsPDF();
+  }
+});
+
+document.addEventListener("click", (event) => {
+  if (event.target.classList.contains("editButton")) {
+    const row = event.target.closest("tr");
+    row.querySelectorAll("td[contenteditable]").forEach((cell) => {
+      cell.contentEditable = cell.isContentEditable ? "false" : "true";
+    });
+    event.target.textContent = row.querySelector("td[contenteditable]").isContentEditable ? "✔️ حفظ" : "🖊️ تحرير";
   }
 });
 
@@ -91,7 +104,6 @@ function saveAsPDF() {
 }
 
 function decodeInvoice(data) {
-  // فك تشفير بيانات الفاتورة بناءً على معايير هيئة الزكاة والضريبة
-  const decodedData = atob(data); // التشفير يكون Base64
+  const decodedData = atob(data); // فك تشفير Base64
   return JSON.parse(decodedData);
 }
