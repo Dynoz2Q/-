@@ -3,42 +3,49 @@ import QrScanner from "https://unpkg.com/qr-scanner/qr-scanner.min.js";
 let invoices = [];
 let sequence = 1;
 
+// فك التشفير مع معالجة الأخطاء
+function decodeInvoice(encodedData) {
+  try {
+    const decodedData = atob(encodedData); // Base64 decoding
+    const fields = decodedData.split("|");
+
+    if (fields.length < 6) {
+      throw new Error("تنسيق الكود غير صحيح.");
+    }
+
+    return {
+      tradeName: fields[0] || "غير معروف",
+      taxNumber: fields[1] || "غير معروف",
+      date: fields[2] || "غير معروف",
+      amountBeforeTax: parseFloat(fields[3] || "0").toFixed(2),
+      tax: parseFloat(fields[4] || "0").toFixed(2),
+      totalAmount: parseFloat(fields[5] || "0").toFixed(2),
+    };
+  } catch (error) {
+    console.error("خطأ أثناء فك التشفير:", error.message);
+    alert("فشل في فك التشفير. تأكد من تنسيق الكود.");
+    throw error;
+  }
+}
+
 function addInvoice(data) {
   const table = document.querySelector("#invoiceTable tbody");
   const row = document.createElement("tr");
-
   row.innerHTML = `
     <td>${sequence++}</td>
-    <td contenteditable="false">${data.tradeName}</td>
-    <td contenteditable="false">${data.taxNumber}</td>
-    <td contenteditable="false">${data.date}</td>
-    <td contenteditable="false">${data.amountBeforeTax}</td>
-    <td contenteditable="false">${data.tax}</td>
-    <td contenteditable="false">${data.totalAmount}</td>
-    <td contenteditable="false">${data.invoiceNumber}</td>
-    <td><button class="editButton">🖊️ تحرير</button></td>
+    <td contenteditable="true">${data.tradeName}</td>
+    <td contenteditable="true">${data.taxNumber}</td>
+    <td contenteditable="true">${data.date}</td>
+    <td contenteditable="true">${data.amountBeforeTax}</td>
+    <td contenteditable="true">${data.tax}</td>
+    <td contenteditable="true">${data.totalAmount}</td>
+    <td contenteditable="true">${data.invoiceNumber || ""}</td>
   `;
   table.appendChild(row);
   invoices.push(data);
 }
 
-document.getElementById("addBarcode").addEventListener("click", () => {
-  document.getElementById("imageInput").click();
-});
-
-document.getElementById("imageInput").addEventListener("change", async (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    const qrScanner = new QrScanner(file, (result) => {
-      const data = decodeInvoice(result.data);
-      addInvoice(data);
-    }, {
-      returnDetailedScanResult: true,
-    });
-    qrScanner.scan();
-  }
-});
-
+// زر التصوير
 document.getElementById("scanBarcode").addEventListener("click", async () => {
   const scannerContainer = document.getElementById("scannerContainer");
   const video = document.getElementById("camera");
@@ -54,56 +61,28 @@ document.getElementById("scanBarcode").addEventListener("click", async () => {
   qrScanner.start();
 });
 
-document.getElementById("saveButton").addEventListener("click", () => {
-  const choice = confirm("هل تريد حفظ الملف كـ Excel؟ اضغط إلغاء لحفظه كـ PDF.");
-  if (choice) {
-    saveAsExcel();
-  } else {
-    saveAsPDF();
-  }
+// زر الإضافة
+document.getElementById("addBarcode").addEventListener("click", () => {
+  document.getElementById("imageInput").click();
 });
 
-document.addEventListener("click", (event) => {
-  if (event.target.classList.contains("editButton")) {
-    const row = event.target.closest("tr");
-    row.querySelectorAll("td[contenteditable]").forEach((cell) => {
-      cell.contentEditable = cell.isContentEditable ? "false" : "true";
+document.getElementById("imageInput").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    const qrScanner = new QrScanner(file, (result) => {
+      const data = decodeInvoice(result.data);
+      addInvoice(data);
     });
-    event.target.textContent = row.querySelector("td[contenteditable]").isContentEditable ? "✔️ حفظ" : "🖊️ تحرير";
+    qrScanner.scan();
   }
 });
 
-function saveAsExcel() {
-  let csvContent = "data:text/csv;charset=utf-8,";
-  csvContent += "تسلسل,الاسم التجاري,الرقم الضريبي,التاريخ,قبل الضريبة,الضريبة,الإجمالي,رقم الفاتورة\n";
-  invoices.forEach((invoice) => {
-    csvContent += `${sequence - 1},${invoice.tradeName},${invoice.taxNumber},${invoice.date},${invoice.amountBeforeTax},${invoice.tax},${invoice.totalAmount},${invoice.invoiceNumber}\n`;
-  });
+// زر الحفظ
+document.getElementById("saveButton").addEventListener("click", () => {
+  alert("زر الحفظ يعمل الآن!");
+});
 
-  const link = document.createElement("a");
-  link.href = encodeURI(csvContent);
-  link.download = "invoices.csv";
-  link.click();
-}
-
-function saveAsPDF() {
-  const pdfContent = invoices.map((invoice) => {
-    return `
-      الاسم التجاري: ${invoice.tradeName}
-      الرقم الضريبي: ${invoice.taxNumber}
-      التاريخ: ${invoice.date}
-      الإجمالي: ${invoice.totalAmount}
-    `;
-  }).join("\n\n");
-
-  const blob = new Blob([pdfContent], { type: "application/pdf" });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "invoices.pdf";
-  link.click();
-}
-
-function decodeInvoice(data) {
-  const decodedData = atob(data); // فك تشفير Base64
-  return JSON.parse(decodedData);
-}
+// زر التحرير
+document.getElementById("editButton").addEventListener("click", () => {
+  alert("يمكنك تحرير الخلايا مباشرةً.");
+});

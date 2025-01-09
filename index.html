@@ -54,6 +54,24 @@
       background-color: #f1f1f1;
     }
 
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: #4CAF50;
+      margin-bottom: 20px;
+    }
+
+    .button-container {
+      margin-top: 20px;
+    }
+
+    .file-input {
+      display: none;
+    }
+
     .scanner-container {
       position: relative;
       width: 100%;
@@ -77,109 +95,55 @@
       border: 3px solid rgba(255, 255, 255, 0.8);
       box-sizing: border-box;
     }
+
+    .scanner-box::before {
+      content: 'ضع الباركود داخل المربع';
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-size: 14px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <div>
+  <div class="container">
     <h1>📋 قارئ الفواتير</h1>
-    <button id="scanBarcode">📸 تصوير باركود</button>
-    <button id="addBarcode">📁 إضافة باركود</button>
-    <input type="file" id="imageInput" style="display: none;" accept="image/*">
+
+    <div class="button-container">
+      <button id="scanBarcode">📸 تصوير باركود</button>
+      <button id="addBarcode">📁 إضافة باركود</button>
+      <input type="file" id="imageInput" class="file-input" accept="image/*">
+      <button id="editButton">✏️ تحرير</button>
+      <button id="saveButton">💾 حفظ</button>
+    </div>
+
     <div class="scanner-container" id="scannerContainer" style="display: none;">
       <video id="camera"></video>
       <div class="scanner-box"></div>
     </div>
+
     <table>
       <thead>
         <tr>
+          <th>تسلسل</th>
           <th>الاسم التجاري</th>
           <th>الرقم الضريبي</th>
           <th>التاريخ</th>
           <th>قبل الضريبة</th>
           <th>الضريبة</th>
           <th>الإجمالي</th>
+          <th>رقم الفاتورة</th>
         </tr>
       </thead>
       <tbody id="invoiceTable">
-        <!-- البيانات -->
+        <!-- البيانات ستضاف هنا -->
       </tbody>
     </table>
   </div>
 
-  <script type="module">
-    import QrScanner from "https://unpkg.com/qr-scanner/qr-scanner.min.js";
-
-    const scannerContainer = document.getElementById("scannerContainer");
-    const camera = document.getElementById("camera");
-    const imageInput = document.getElementById("imageInput");
-    const invoiceTable = document.getElementById("invoiceTable");
-
-    document.getElementById("scanBarcode").addEventListener("click", () => {
-      scannerContainer.style.display = "block";
-      const qrScanner = new QrScanner(camera, result => {
-        try {
-          const invoiceData = decodeInvoice(result.data);
-          addInvoiceToTable(invoiceData);
-          qrScanner.stop();
-          scannerContainer.style.display = "none";
-        } catch (error) {
-          alert("خطأ في قراءة البيانات: " + error.message);
-        }
-      });
-      qrScanner.start();
-    });
-
-    document.getElementById("addBarcode").addEventListener("click", () => {
-      imageInput.click();
-    });
-
-    imageInput.addEventListener("change", async (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        const qrScanner = new QrScanner(file, result => {
-          try {
-            const invoiceData = decodeInvoice(result.data);
-            addInvoiceToTable(invoiceData);
-          } catch (error) {
-            alert("خطأ في قراءة البيانات: " + error.message);
-          }
-        });
-        qrScanner.scan();
-      }
-    });
-
-    function decodeInvoice(encodedData) {
-      try {
-        const decodedData = atob(encodedData);
-        const fields = decodedData.split("|");
-        if (fields.length < 6) {
-          throw new Error("تنسيق الفاتورة غير صحيح. تحقق من الكود.");
-        }
-        return {
-          tradeName: fields[0] || "غير معروف",
-          taxNumber: fields[1] || "غير معروف",
-          date: fields[2] || "غير معروف",
-          amountBeforeTax: fields[3] || "0",
-          tax: fields[4] || "0",
-          totalAmount: fields[5] || "0",
-        };
-      } catch (error) {
-        throw new Error("فشل فك التشفير: تأكد من الكود.");
-      }
-    }
-
-    function addInvoiceToTable(invoice) {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${invoice.tradeName}</td>
-        <td>${invoice.taxNumber}</td>
-        <td>${invoice.date}</td>
-        <td>${invoice.amountBeforeTax}</td>
-        <td>${invoice.tax}</td>
-        <td>${invoice.totalAmount}</td>
-      `;
-      invoiceTable.appendChild(row);
-    }
-  </script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>
