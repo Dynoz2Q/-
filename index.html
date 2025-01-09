@@ -7,26 +7,24 @@
   <style>
     body {
       font-family: Arial, sans-serif;
+      margin: 20px;
       background-color: #f9f9f9;
       text-align: center;
-      margin: 20px;
     }
-
     button {
       background-color: #4CAF50;
       color: white;
       border: none;
+      border-radius: 5px;
       padding: 10px 15px;
       margin: 10px;
       cursor: pointer;
-      border-radius: 5px;
-      transition: 0.3s ease;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
     }
-
     button:hover {
       background-color: #45a049;
     }
-
     table {
       width: 90%;
       margin: 20px auto;
@@ -34,66 +32,88 @@
       background: white;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
-
     th, td {
       padding: 10px;
       text-align: center;
       border: 1px solid #ddd;
     }
-
     th {
       background-color: #f2f2f2;
     }
-
-    .button-container {
-      margin-top: 20px;
+    #invoiceTable tbody tr:nth-child(even) {
+      background-color: #f9f9f9;
     }
-
-    .scanner-box {
-      width: 250px;
-      height: 250px;
-      border: 3px solid rgba(255, 255, 255, 0.8);
-      margin: 20px auto;
+    #invoiceTable tbody tr:hover {
+      background-color: #f1f1f1;
     }
-
+    .scanner-container {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: black;
+    }
     video {
       width: 100%;
       height: auto;
     }
+    .scanner-box {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 250px;
+      height: 250px;
+      border: 3px solid rgba(255, 255, 255, 0.8);
+      box-sizing: border-box;
+    }
+    .scanner-box::before {
+      content: 'ضع الباركود داخل المربع';
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-size: 14px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <h1>📋 قارئ الفواتير</h1>
+  <div class="container">
+    <h1>📋 قارئ الفواتير</h1>
 
-  <div class="button-container">
-    <button id="scanBarcode">📸 تصوير باركود</button>
-    <button id="addBarcode">📁 إضافة باركود</button>
-    <button id="saveExcel">💾 حفظ كـ Excel</button>
-    <button id="savePDF">💾 حفظ كـ PDF</button>
-    <input type="file" id="imageInput" style="display: none;" accept="image/*">
+    <div class="button-container">
+      <button id="scanBarcode">📸 تصوير باركود</button>
+      <button id="addBarcode">📁 إضافة باركود</button>
+      <input type="file" id="imageInput" class="file-input" accept="image/*" style="display: none;">
+    </div>
+
+    <div class="scanner-container" id="scannerContainer" style="display: none;">
+      <video id="camera"></video>
+      <div class="scanner-box"></div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>تسلسل</th>
+          <th>الاسم التجاري</th>
+          <th>الرقم الضريبي</th>
+          <th>التاريخ</th>
+          <th>قبل الضريبة</th>
+          <th>الضريبة</th>
+          <th>الإجمالي</th>
+          <th>رقم الفاتورة</th>
+          <th>تحرير</th>
+        </tr>
+      </thead>
+      <tbody id="invoiceTable"></tbody>
+    </table>
+
+    <button id="saveExcel">💾 حفظ Excel</button>
+    <button id="savePDF">💾 حفظ PDF</button>
   </div>
-
-  <div id="scannerContainer" style="display: none;">
-    <video id="camera"></video>
-    <div class="scanner-box">ضع الباركود هنا</div>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>تسلسل</th>
-        <th>الاسم التجاري</th>
-        <th>الرقم الضريبي</th>
-        <th>التاريخ</th>
-        <th>قبل الضريبة</th>
-        <th>الضريبة</th>
-        <th>الإجمالي</th>
-        <th>رقم الفاتورة</th>
-        <th>تحرير</th>
-      </tr>
-    </thead>
-    <tbody id="invoiceTable"></tbody>
-  </table>
 
   <script type="module">
     import QrScanner from "https://unpkg.com/qr-scanner/qr-scanner.min.js";
@@ -101,11 +121,11 @@
     let sequence = 1;
     let invoices = [];
 
-    // فك التشفير
+    // معالجة فك التشفير 
     function decodeInvoice(base64Data) {
       try {
         const cleanedData = base64Data.trim();
-        const decoded = atob(cleanedData);
+        const decoded = atob(cleanedData); // فك التشفير باستخدام Base64
         const parts = decoded.split("\x01").join("").split("\x02");
 
         return {
@@ -118,7 +138,7 @@
           invoiceNumber: sequence++
         };
       } catch (error) {
-        console.error("Error decoding invoice:", error);
+        console.error("خطأ في فك التشفير:", error);
         alert("خطأ في فك التشفير. تأكد من أن الكود متوافق مع هيئة الزكاة.");
         return null;
       }
@@ -138,83 +158,52 @@
         <td>${data.tax}</td>
         <td>${data.totalAmount}</td>
         <td>${data.invoiceNumber}</td>
-        <td><button onclick="editInvoice(this)">✏️ تحرير</button></td>
+        <td><button onclick="editInvoice(${data.invoiceNumber})">تعديل</button></td>
       `;
-
       table.appendChild(row);
-      invoices.push(data);
     }
 
-    // تحرير البيانات
-    window.editInvoice = (btn) => {
-      const row = btn.closest("tr");
-      const cells = row.querySelectorAll("td");
-      cells.forEach((cell, index) => {
-        if (index < 8) cell.contentEditable = true;
+    function handleBarcodeScan(imageData) {
+      const base64String = imageData.split(',')[1]; // استخراج الـ Base64
+      const invoiceData = decodeInvoice(base64String);
+      if (invoiceData) {
+        addInvoice(invoiceData);
+      }
+    }
+
+    // التعامل مع التصوير بالكاميرا أو الصورة
+    document.getElementById('scanBarcode').addEventListener('click', () => {
+      const scanner = new QrScanner(document.getElementById('camera'), (result) => {
+        handleBarcodeScan(result);
+        scanner.stop();
+        document.getElementById('scannerContainer').style.display = 'none';
       });
-    };
-
-    // مسح باستخدام الكاميرا
-    document.getElementById("scanBarcode").addEventListener("click", () => {
-      const video = document.createElement("video");
-      document.body.appendChild(video);
-
-      const qrScanner = new QrScanner(video, (result) => {
-        const data = decodeInvoice(result.data);
-        if (data) addInvoice(data);
-        qrScanner.stop();
-        video.remove();
-      });
-
-      qrScanner.start();
+      scanner.start();
+      document.getElementById('scannerContainer').style.display = 'block';
     });
 
-    // مسح صورة
-    document.getElementById("addBarcode").addEventListener("click", () => {
-      document.getElementById("imageInput").click();
+    document.getElementById('addBarcode').addEventListener('click', () => {
+      document.getElementById('imageInput').click();
     });
 
-    document.getElementById("imageInput").addEventListener("change", async (event) => {
-      const file = event.target.files[0];
+    document.getElementById('imageInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
       if (file) {
-        const qrScanner = new QrScanner(file, (result) => {
-          const data = decodeInvoice(result.data);
-          if (data) addInvoice(data);
-        });
-        qrScanner.scan();
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          handleBarcodeScan(event.target.result);
+        };
+        reader.readAsDataURL(file);
       }
     });
 
-    // حفظ كـ Excel
-    document.getElementById("saveExcel").addEventListener("click", () => {
-      let csvContent = "data:text/csv;charset=utf-8,";
-      csvContent += "تسلسل,الاسم التجاري,الرقم الضريبي,التاريخ,قبل الضريبة,الضريبة,الإجمالي,رقم الفاتورة\n";
-      invoices.forEach((invoice) => {
-        csvContent += `${invoice.invoiceNumber},${invoice.tradeName},${invoice.taxNumber},${invoice.date},${invoice.amountBeforeTax},${invoice.tax},${invoice.totalAmount},${invoice.invoiceNumber}\n`;
-      });
-
-      const link = document.createElement("a");
-      link.href = encodeURI(csvContent);
-      link.download = "invoices.csv";
-      link.click();
+    // حفظ البيانات بصيغة Excel أو PDF (ليس كل الكود موجود لهذه الوظيفة)
+    document.getElementById('saveExcel').addEventListener('click', () => {
+      alert('حفظ Excel ليس مفعل بعد!');
     });
 
-    // حفظ كـ PDF
-    document.getElementById("savePDF").addEventListener("click", () => {
-      const pdfContent = invoices.map((invoice) => {
-        return `
-          الاسم التجاري: ${invoice.tradeName}
-          الرقم الضريبي: ${invoice.taxNumber}
-          التاريخ: ${invoice.date}
-          الإجمالي: ${invoice.totalAmount}
-        `;
-      }).join("\n\n");
-
-      const blob = new Blob([pdfContent], { type: "application/pdf" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "invoices.pdf";
-      link.click();
+    document.getElementById('savePDF').addEventListener('click', () => {
+      alert('حفظ PDF ليس مفعل بعد!');
     });
   </script>
 </body>
