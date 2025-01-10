@@ -1,70 +1,76 @@
-import QrScanner from "https://unpkg.com/qr-scanner/qr-scanner.min.js";
+// التبديل بين الوضع الداكن والساطع
+let darkMode = false;
 
-let invoices = [];
-
-document.getElementById("scanBarcode").addEventListener("click", () => {
-  const scannerContainer = document.getElementById("scannerContainer");
-  const video = document.getElementById("camera");
-
-  scannerContainer.style.display = "flex";  // اظهار الكاميرا والمربع
-  const qrScanner = new QrScanner(video, (result) => {
-    const data = decodeInvoice(result.data);
-    addInvoice(data);
-    qrScanner.stop();
-    scannerContainer.style.display = "none";  // إخفاء الكاميرا بعد القراءة
-  });
-
-  qrScanner.start();
-});
-
-document.getElementById("addBarcode").addEventListener("click", () => {
-  document.getElementById("imageInput").click();
-});
-
-document.getElementById("imageInput").addEventListener("change", async (event) => {
-  const file = event.target.files[0];
-  if (file) {
-    const qrScanner = new QrScanner(file, (result) => {
-      const data = decodeInvoice(result.data);
-      addInvoice(data);
-    });
-    qrScanner.scan();
-  }
-});
-
-function addInvoice(data) {
-  const table = document.querySelector("#invoiceTable tbody");
-  const row = document.createElement("tr");
-
-  // إضافة البيانات إلى الجدول بناءً على ما إذا كانت موجودة
-  row.innerHTML = `
-    <td>${data.sellerName}</td>
-    <td>${data.taxNumber}</td>
-    <td>${data.invoiceDate}</td>
-    <td>${data.totalAmount}</td>
-    <td>${data.taxAmount}</td>
-  `;
-  table.appendChild(row);
-  invoices.push(data);
+function toggleTheme() {
+    darkMode = !darkMode;
+    document.body.classList.toggle('dark-mode', darkMode);
 }
 
-function decodeInvoice(data) {
-  try {
-    const decodedData = atob(data); // فك تشفير البيانات من Base64
-    const parsedData = JSON.parse(decodedData); // تحويل النص إلى كائن JSON
+// فتح الكاميرا لقراءة QR
+function openCamera() {
+    alert('فتح الكاميرا لقراءة QR');
+    // إضافة الكود لفتح الكاميرا هنا
+    // عند قراءة QR، يتم الانتقال للصفحة الثانية ويعرض البيانات
+    goToPage2({
+        sellerName: 'شركة XYZ',
+        taxNumber: '123456789',
+        date: '2025-01-01',
+        totalAmount: '1000.00',
+        taxAmount: '150.00'
+    });
+}
 
-    // الحصول على البيانات المطلوبة من الكود المشفر
-    const invoiceData = {
-      sellerName: parsedData.sellerName || "غير متوفر",
-      taxNumber: parsedData.taxNumber || "غير متوفر",
-      invoiceDate: parsedData.invoiceDate || "غير متوفر",
-      totalAmount: parsedData.totalAmount || "غير متوفر",
-      taxAmount: parsedData.taxAmount || "غير متوفر",
-    };
+// رفع صورة QR
+function openFileDialog() {
+    alert('رفع صورة QR');
+    // إضافة الكود لتحميل صورة QR هنا
+    // عند قراءة QR، يتم الانتقال للصفحة الثانية ويعرض البيانات
+    goToPage2({
+        sellerName: 'شركة XYZ',
+        taxNumber: '123456789',
+        date: '2025-01-01',
+        totalAmount: '1000.00',
+        taxAmount: '150.00'
+    });
+}
 
-    return invoiceData;
-  } catch (error) {
-    console.error("فشل في فك التشفير:", error);
-    return {};
-  }
+// إدخال كود مشفر base64
+function openBase64Input() {
+    let code = prompt('أدخل كود base64');
+    alert('تم فك تشفير الكود: ' + code); // فك التشفير وعرض البيانات هنا
+    // عند فك التشفير، يتم الانتقال للصفحة الثانية ويعرض البيانات
+    goToPage2({
+        sellerName: 'شركة XYZ',
+        taxNumber: '123456789',
+        date: '2025-01-01',
+        totalAmount: '1000.00',
+        taxAmount: '150.00'
+    });
+}
+
+// الانتقال إلى الصفحة الثانية وعرض البيانات
+function goToPage2(data) {
+    document.getElementById('page1').style.display = 'none';
+    document.getElementById('page2').style.display = 'block';
+    populateInvoiceTable(data);
+}
+
+// إضافة بيانات الفاتورة للجدول
+function populateInvoiceTable(data) {
+    const table = document.getElementById('invoice-data');
+    table.innerHTML = `
+        <tr>
+            <td>${data.sellerName}</td>
+            <td>${data.taxNumber}</td>
+            <td>${data.date}</td>
+            <td>${data.totalAmount}</td>
+            <td>${data.taxAmount}</td>
+        </tr>
+    `;
+}
+
+// تحرير الجدول
+function editTable() {
+    alert('تم تفعيل وضع التحرير');
+    // إضافة الكود لتحرير البيانات في الجدول هنا
 }
