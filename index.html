@@ -25,6 +25,34 @@
     button:hover {
       background-color: #45a049;
     }
+    #scannerContainer {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+      justify-content: center;
+      align-items: center;
+    }
+    #camera {
+      width: 80%;
+      height: auto;
+      border: 2px solid #fff;
+      border-radius: 10px;
+    }
+    #scannerContainer .overlay {
+      position: absolute;
+      border: 2px solid #00ff00;
+      width: 200px;
+      height: 200px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
     table {
       width: 90%;
       margin: 20px auto;
@@ -39,12 +67,6 @@
     }
     th {
       background-color: #f2f2f2;
-    }
-    #invoiceTable tbody tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-    #invoiceTable tbody tr:hover {
-      background-color: #f1f1f1;
     }
   </style>
 </head>
@@ -71,6 +93,12 @@
         <!-- البيانات ستضاف هنا -->
       </tbody>
     </table>
+
+    <!-- الكاميرا مع المربع -->
+    <div id="scannerContainer">
+      <video id="camera"></video>
+      <div class="overlay"></div>
+    </div>
   </div>
 
   <script type="module" src="script.js"></script>

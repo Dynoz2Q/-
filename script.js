@@ -2,6 +2,21 @@ import QrScanner from "https://unpkg.com/qr-scanner/qr-scanner.min.js";
 
 let invoices = [];
 
+document.getElementById("scanBarcode").addEventListener("click", () => {
+  const scannerContainer = document.getElementById("scannerContainer");
+  const video = document.getElementById("camera");
+
+  scannerContainer.style.display = "flex";  // اظهار الكاميرا والمربع
+  const qrScanner = new QrScanner(video, (result) => {
+    const data = decodeInvoice(result.data);
+    addInvoice(data);
+    qrScanner.stop();
+    scannerContainer.style.display = "none";  // إخفاء الكاميرا بعد القراءة
+  });
+
+  qrScanner.start();
+});
+
 document.getElementById("addBarcode").addEventListener("click", () => {
   document.getElementById("imageInput").click();
 });
@@ -15,21 +30,6 @@ document.getElementById("imageInput").addEventListener("change", async (event) =
     });
     qrScanner.scan();
   }
-});
-
-document.getElementById("scanBarcode").addEventListener("click", async () => {
-  const scannerContainer = document.getElementById("scannerContainer");
-  const video = document.getElementById("camera");
-  scannerContainer.style.display = "block";
-
-  const qrScanner = new QrScanner(video, (result) => {
-    const data = decodeInvoice(result.data);
-    addInvoice(data);
-    qrScanner.stop();
-    scannerContainer.style.display = "none";
-  });
-
-  qrScanner.start();
 });
 
 function addInvoice(data) {
