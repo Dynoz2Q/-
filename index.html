@@ -1,106 +1,106 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>📋 قارئ الفواتير</title>
+  <title>مسح QR Code</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background-color: #f9f9f9;
-      text-align: center;
-    }
-    button {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      padding: 10px 15px;
-      margin: 10px;
-      cursor: pointer;
-      font-size: 16px;
-      transition: background-color 0.3s ease;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
+    /* Styling for the scanner container */
     #scannerContainer {
+      position: relative;
+      width: 100%;
+      height: 400px;
+      background-color: #000;
       display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
+    }
+
+    /* The camera display */
+    #camera {
       width: 100%;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: 999;
-      justify-content: center;
-      align-items: center;
+      object-fit: cover;
     }
-    #camera {
-      width: 80%;
-      height: auto;
-      border: 2px solid #fff;
-      border-radius: 10px;
-    }
-    #scannerContainer .overlay {
+
+    /* The QR code scanning area */
+    #scanArea {
       position: absolute;
-      border: 2px solid #00ff00;
-      width: 200px;
-      height: 200px;
       top: 50%;
       left: 50%;
+      width: 250px;
+      height: 250px;
+      border: 2px dashed #fff;
       transform: translate(-50%, -50%);
       pointer-events: none;
     }
-    table {
-      width: 90%;
-      margin: 20px auto;
-      border-collapse: collapse;
-      background: white;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+    /* Button styling */
+    .button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
     }
-    th, td {
-      padding: 10px;
-      text-align: center;
-      border: 1px solid #ddd;
-    }
-    th {
-      background-color: #f2f2f2;
+
+    /* Hidden input for file selection */
+    #imageInput {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>📋 قارئ الفواتير</h1>
-    <div class="button-container">
-      <button id="scanBarcode">📸 تصوير باركود</button>
-      <button id="addBarcode">📁 إضافة باركود</button>
-      <input type="file" id="imageInput" class="file-input" accept="image/*">
-    </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>اسم البائع</th>
-          <th>الرقم الضريبي</th>
-          <th>تاريخ الفاتورة</th>
-          <th>مبلغ الفاتورة مع الضريبة</th>
-          <th>مبلغ الضريبة</th>
-        </tr>
-      </thead>
-      <tbody id="invoiceTable">
-        <!-- البيانات ستضاف هنا -->
-      </tbody>
-    </table>
-
-    <!-- الكاميرا مع المربع -->
-    <div id="scannerContainer">
-      <video id="camera"></video>
-      <div class="overlay"></div>
-    </div>
+  <button class="button" id="scanBarcode">تصوير QR Code</button>
+  <div id="scannerContainer">
+    <video id="camera"></video>
+    <div id="scanArea"></div> <!-- Square marker for QR Code -->
+    <button class="button" id="stopScanButton" style="display: none;">إيقاف التصوير</button>
   </div>
+  <p id="message" style="display:none;"></p> <!-- Success message after scanning -->
 
-  <script type="module" src="script.js"></script>
+  <script src="https://unpkg.com/qr-scanner/qr-scanner.min.js"></script>
+  <script>
+    // Variables for scanner
+    const scannerContainer = document.getElementById("scannerContainer");
+    const video = document.getElementById("camera");
+    const stopScanButton = document.getElementById("stopScanButton");
+    const message = document.getElementById("message");
+
+    // Start the QR code scanner
+    document.getElementById("scanBarcode").addEventListener("click", () => {
+      scannerContainer.style.display = "block";
+      stopScanButton.style.display = "inline-block";
+
+      // Initialize QR scanner
+      const qrScanner = new QrScanner(video, (result) => {
+        if (result) {
+          // Stop scanning once QR code is read
+          qrScanner.stop();
+          scannerContainer.style.display = "none";
+
+          // Show success message
+          message.textContent = "تم مسح الكود بنجاح!";
+          message.style.display = "block";
+
+          // Process data (you can add custom logic here)
+          console.log("QR Code Data:", result.data);
+        }
+      });
+
+      // Start the scanner
+      qrScanner.start();
+    });
+
+    // Stop scanning when the stop button is clicked
+    stopScanButton.addEventListener("click", () => {
+      scannerContainer.style.display = "none";
+      message.style.display = "none";
+      stopScanButton.style.display = "none";
+    });
+  </script>
+
 </body>
 </html>
