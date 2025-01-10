@@ -7,38 +7,85 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            direction: rtl;
             text-align: center;
+            direction: rtl;
             margin: 20px;
+            background-color: #f9f9f9;
         }
-        table {
-            margin: 20px auto;
-            border-collapse: collapse;
-            width: 80%;
+
+        h1 {
+            color: #4CAF50;
         }
-        th, td {
-            border: 1px solid #000;
-            padding: 8px;
-        }
-        th {
-            background-color: #f4f4f4;
-        }
+
         button {
-            margin: 5px;
+            margin: 10px;
             padding: 10px 15px;
+            font-size: 16px;
             cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
         }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
         #scannerContainer {
             display: none;
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+
+        video {
+            width: 100%;
+            border: 1px solid #ddd;
+        }
+
+        #scanOverlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 150px;
+            height: 150px;
+            transform: translate(-50%, -50%);
+            border: 3px dashed red;
+        }
+
+        table {
+            margin: 20px auto;
+            width: 90%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
         }
     </style>
 </head>
 <body>
-    <h1>قارئ الفواتير</h1>
+    <h1>📋 قارئ الفواتير</h1>
     <button id="scanBarcode">📸 تصوير باركود</button>
     <button id="addBarcode">📂 إضافة صورة</button>
     <button id="saveButton">💾 حفظ</button>
-    <table id="invoiceTable">
+
+    <div id="scannerContainer">
+        <video id="camera"></video>
+        <div id="scanOverlay"></div>
+    </div>
+
+    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+
+    <table>
         <thead>
             <tr>
                 <th>تسلسل</th>
@@ -50,15 +97,87 @@
                 <th>الاسم التجاري</th>
                 <th>الرقم الضريبي</th>
                 <th>تحرير</th>
-            </tr>
+            </tr<!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Invoice Reader App</title>
+                <script src="https://unpkg.com/@zxing/library@latest"></script>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        text-align: center;
+                        margin: 20px;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 20px;
+                    }
+                    th, td {
+                        border: 1px solid #ddd;
+                        padding: 8px;
+                        text-align: center;
+                    }
+                    th {
+                        background-color: #f4f4f4;
+                    }
+                    #scannerContainer {
+                        display: none;
+                        position: relative;
+                        margin: 20px auto;
+                        max-width: 600px;
+                    }
+                    video {
+                        width: 100%;
+                    }
+                    button {
+                        margin: 10px;
+                        padding: 10px 20px;
+                        font-size: 16px;
+                        cursor: pointer;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>قارئ الفواتير</h1>
+                <button id="scanBarcode">تصوير QR Code</button>
+                <button id="addBarcode">رفع صورة</button>
+                <button id="saveButton">حفظ</button>
+                <input type="file" id="imageInput" accept="image/*" style="display: none;">
+            
+                <div id="scannerContainer">
+                    <video id="camera"></video>
+                </div>
+            
+                <table id="invoiceTable">
+                    <thead>
+                        <tr>
+                            <th>التسلسل</th>
+                            <th>التاريخ</th>
+                            <th>قبل الضريبة</th>
+                            <th>الضريبة</th>
+                            <th>الإجمالي</th>
+                            <th>رقم الفاتورة</th>
+                            <th>الاسم التجاري</th>
+                            <th>الرقم الضريبي</th>
+                            <th>تحرير</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- البيانات ستضاف هنا -->
+                    </tbody>
+                </table>
+            
+                <script src="script.js"></script>
+            </body>
+            </html>>
         </thead>
-        <tbody>
-        </tbody>
+        <tbody id="invoiceTable"></tbody>
     </table>
-    <div id="scannerContainer">
-        <video id="camera" width="400"></video>
-    </div>
-    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
     <script src="script.js"></script>
 </body>
 </html>
