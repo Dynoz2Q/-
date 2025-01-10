@@ -1,59 +1,36 @@
 body {
   font-family: Arial, sans-serif;
+  direction: rtl;
   text-align: center;
-  margin: 0;
-  padding: 0;
-  background-color: #f4f4f4;
 }
 
-.container {
-  width: 90%;
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+header {
+  margin-bottom: 20px;
 }
 
-button {
-  padding: 10px 20px;
-  font-size: 16px;
+.controls button {
   margin: 10px;
-  border: none;
-  background-color: #4CAF50;
-  color: white;
-  border-radius: 5px;
-  cursor: pointer;
 }
 
-button:disabled {
-  background-color: #ccc;
-}
-
-#reader {
+#cameraPreview {
   margin-top: 20px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  height: 300px;
+  display: none;
 }
 
-#invoice-data {
+#invoiceDetails {
   margin-top: 20px;
 }
 
-#invoice-table {
+table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
 }
 
-#invoice-table th, #invoice-table td {
+th, td {
   padding: 10px;
-  text-align: center;
-  border: 1px solid #ccc;
+  border: 1px solid #ddd;
 }
 
-#save-action {
-  margin-top: 20px;
+.buttons button {
+  margin: 10px;
 }

@@ -3,57 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تطبيق قارئ الفواتير</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <title>قارئ الفواتير</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>قارئ فواتير هيئة الزكاة والضريبة</h1>
-        
-        <!-- QR Code Reader Section -->
-        <div id="qr-code-reader">
-            <button id="open-camera-btn">
-                📸 تصوير QR-Code
-            </button>
-            <div id="reader" style="width: 100%; height: 300px;"></div>
+    <header>
+        <h1>قارئ الفواتير المتوافقة مع هيئة الزكاة</h1>
+    </header>
+
+    <main>
+        <div class="controls">
+            <button id="scanBtn">تصوير QR-Code</button>
+            <input type="file" id="imageUpload" accept="image/*" hidden>
+            <button id="uploadBtn">إضافة Bar-Code</button>
         </div>
 
-        <!-- Display the Invoice Data as Table -->
-        <div id="invoice-data">
-            <h2>تفاصيل الفاتورة</h2>
-            <table id="invoice-table">
-                <tr>
-                    <th>السلسل</th>
-                    <th>الاسم التجاري</th>
-                    <th>الرقم الضريبي</th>
-                    <th>التاريخ</th>
-                    <th>قبل الضريبة</th>
-                    <th>الضريبة</th>
-                    <th>الإجمالي</th>
-                    <th>رقم الفاتورة</th>
-                    <th>التحرير</th>
-                </tr>
-                <tr>
-                    <td id="serial-number">غير متوفر</td>
-                    <td id="business-name">غير متوفر</td>
-                    <td id="tax-number">غير متوفر</td>
-                    <td id="date">غير متوفر</td>
-                    <td id="before-tax">غير متوفر</td>
-                    <td id="tax">غير متوفر</td>
-                    <td id="total">غير متوفر</td>
-                    <td id="invoice-number">غير متوفر</td>
-                    <td><button id="edit-btn">🔧 تحرير</button></td>
-                </tr>
+        <div id="cameraPreview" class="camera-preview">
+            <video id="video" width="100%" height="300px"></video>
+            <canvas id="canvas" hidden></canvas>
+        </div>
+
+        <div id="invoiceDetails" class="invoice-details">
+            <table id="invoiceTable">
+                <thead>
+                    <tr>
+                        <th>الرقم التسلسلي</th>
+                        <th>الاسم التجاري</th>
+                        <th>الرقم الضريبي</th>
+                        <th>التاريخ</th>
+                        <th>قبل الضريبة</th>
+                        <th>الضريبة</th>
+                        <th>الإجمالي</th>
+                        <th>رقم الفاتورة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- البيانات ستعرض هنا -->
+                </tbody>
             </table>
         </div>
 
-        <!-- Save Button -->
-        <div id="save-action">
-            <button id="save-btn">💾 حفظ</button>
+        <div class="buttons">
+            <button id="editBtn">تحرير</button>
+            <button id="saveBtn">حفظ</button>
         </div>
-    </div>
+    </main>
 
-    <script src="app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.18.6/umd/index.min.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
