@@ -1,106 +1,122 @@
-// استخدام مكتبة ZXing لقراءة QR-Code
-const { BrowserQRCodeReader } = require('@zxing/library');
-let video = document.getElementById('video');
-let canvas = document.getElementById('canvas');
-let ctx = canvas.getContext('2d');
+import QrScanner from "https://unpkg.com/qr-scanner/qr-scanner.min.js";
 
-// إعداد الكاميرا
-let scanner = new BrowserQRCodeReader();
+let invoices = [];
+let sequence = 1;
 
-document.getElementById('scanBtn').addEventListener('click', function() {
-    startCamera();
-});
+function addInvoice(data) {
+  const table = document.querySelector("#invoiceTable tbody");
+  const row = document.createElement("tr");
 
-document.getElementById('uploadBtn').addEventListener('click', function() {
-    document.getElementById('imageUpload').click();
-});
-
-document.getElementById('imageUpload').addEventListener('change', function(e) {
-    let file = e.target.files[0];
-    if (file) {
-        let reader = new FileReader();
-        reader.onload = function(event) {
-            let img = new Image();
-            img.onload = function() {
-                let result = scanner.decodeFromImage(img);
-                displayInvoiceData(result.getText());
-            };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
-});
-
-// دالة لفتح الكاميرا
-function startCamera() {
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
-        .then(function(stream) {
-            video.srcObject = stream;
-            video.play();
-            setInterval(() => {
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                scanner.decodeFromCanvas(imageData).then(result => {
-                    displayInvoiceData(result.getText());
-                }).catch(err => {});
-            }, 1000);
-        })
-        .catch(function(err) {
-            console.error("Error accessing camera: " + err);
-        });
+  row.innerHTML = `
+    <td>${sequence++}</td>
+    <td>${data.date}</td>
+    <td>${data.amountBeforeTax}</td>
+    <td>${data.tax}</td>
+    <td>${data.totalAmount}</td>
+    <td>${data.invoiceNumber}</td>
+    <td>${data.commercialName || ""}</td>
+    <td>${data.taxNumber || ""}</td>
+    <td><button class="editRowButton">🖊</button></td>
+  `;
+  table.appendChild(row);
+  invoices.push(data);
 }
 
-// عرض تفاصيل الفاتورة
-function displayInvoiceData(decodedText) {
-    const data = JSON.parse(decodedText);
-    const table = document.getElementById('invoiceTable').getElementsByTagName('tbody')[0];
-    let row = table.insertRow();
-    row.insertCell(0).textContent = data.serialNumber;
-    row.insertCell(1).textContent = data.businessName;
-    row.insertCell(2).textContent = data.taxNumber;
-    row.insertCell(3).textContent = data.date;
-    row.insertCell(4).textContent = data.beforeTax;
-    row.insertCell(5).textContent = data.tax;
-    row.insertCell(6).textContent = data.total;
-    row.insertCell(7).textContent = data.invoiceNumber;
+document.getElementById("addBarcode").addEventListener("click", () => {
+  document.getElementById("imageInput").click();
+});
+
+document.getElementById("imageInput").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    const qrScanner = new QrScanner(file, (result) => {
+      const data = decodeInvoice(result.data);
+      addInvoice(data);
+    });
+    qrScanner.scan();
+  }
+});
+
+document.getElementById("scanBarcode").addEventListener("click", async () => {
+  const scannerContainer = document.getElementById("scannerContainer");
+  const video = document.getElementById("camera");
+  scannerContainer.style.display = "block";
+
+  const qrScanner = new QrScanner(video, (result) => {
+    const data = decodeInvoice(result.data);
+    addInvoice(data);
+    qrScanner.stop();
+    scannerContainer.style.display = "none";
+  });
+
+  qrScanner.start();
+});
+
+document.getElementById("saveButton").addEventListener("click", () => {
+  const choice = confirm("هل تريد حفظ الملف كـ Excel؟ اضغط إلغاء لحفظه كـ PDF.");
+  if (choice) {
+    saveAsExcel();
+  } else {
+    saveAsPDF();
+  }
+});
+
+function saveAsExcel() {
+  let csvContent = "data:text/csv;charset=utf-8,";
+  csvContent += "تسلسل,التاريخ,قبل الضريبة,الضريبة,الإجمالي,رقم الفاتورة,الاسم التجاري,الرقم الضريبي\n";
+  invoices.forEach((invoice) => {
+    csvContent += $;{sequence - 1}$
+    {invoice.date}$
+    {invoice.amountBeforeTax}$
+    {invoice.tax}$
+    {invoice.totalAmount}$
+    {invoice.invoiceNumber}$
+    {invoice.commercialName || ""}$
+    {invoice.taxNumber || ""}n;
+  });
+
+  const link = document.createElement("a");
+  link.href = encodeURI(csvContent);
+  link.download = "invoices.csv";
+  link.click();
 }
 
-// زر التحرير
-document.getElementById('editBtn').addEventListener('click', function() {
-    let cells = document.querySelectorAll('#invoiceTable td');
-    cells.forEach(cell => {
-        cell.setAttribute('contenteditable', true);
-    });
-});
+function saveAsPDF() {
+  const pdfContent = invoices.map((invoice) => {
+    return `
+      التاريخ: ${invoice.date}
+      قبل الضريبة: ${invoice.amountBeforeTax}
+      الضريبة: ${invoice.tax}
+      الإجمالي: ${invoice.totalAmount}
+      رقم الفاتورة: ${invoice.invoiceNumber}
+      الاسم التجاري: ${invoice.commercialName || "غير متوفر"}
+      الرقم الضريبي: ${invoice.taxNumber || "غير متوفر"}
+    `;
+  }).join("\n\n");
 
-// زر الحفظ
-document.getElementById('saveBtn').addEventListener('click', function() {
-    let invoiceData = [];
-    let rows = document.querySelectorAll('#invoiceTable tr');
-    rows.forEach(row => {
-        let rowData = {};
-        let cells = row.getElementsByTagName('td');
-        if (cells.length) {
-            rowData.serialNumber = cells[0].textContent;
-            rowData.businessName = cells[1].textContent;
-            rowData.taxNumber = cells[2].textContent;
-            rowData.date = cells[3].textContent;
-            rowData.beforeTax = cells[4].textContent;
-            rowData.tax = cells[5].textContent;
-            rowData.total = cells[6].textContent;
-            rowData.invoiceNumber = cells[7].textContent;
-            invoiceData.push(rowData);
-        }
-    });
-    let jsonData = JSON.stringify(invoiceData);
-    downloadFile(jsonData, 'invoice.json');
-});
+  const blob = new Blob([pdfContent], { type: "application/pdf" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "invoices.pdf";
+  link.click();
+}
 
-// دالة لتحميل البيانات كملف
-function downloadFile(data, filename) {
-    let blob = new Blob([data], { type: 'application/json' });
-    let link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    link.click();
+function decodeInvoice(data) {
+  try {
+    const decodedData = atob(data);
+    const parsedData = JSON.parse(decodedData);
+
+    return {
+      date: parsedData.date || "غير متوفر",
+      amountBeforeTax: parsedData.amountBeforeTax || "غير متوفر",
+      tax: parsedData.tax || "غير متوفر",
+      totalAmount: parsedData.totalAmount || "غير متوفر",
+      invoiceNumber: parsedData.invoiceNumber || "غير متوفر",
+      commercialName: parsedData.commercialName || "",
+      taxNumber: parsedData.taxNumber || ""
+    };
+  } catch (error) {
+    console.error("فشل في فك التشفير:", error);
+    return {};
+  }
 }
