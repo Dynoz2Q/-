@@ -3,10 +3,12 @@ import QrScanner from "https://unpkg.com/qr-scanner/qr-scanner.min.js";
 let invoices = [];
 let sequence = 1;
 
+// دالة لإضافة الفاتورة
 function addInvoice(data) {
   const table = document.querySelector("#invoiceTable tbody");
   const row = document.createElement("tr");
 
+  // إضافة البيانات إلى الجدول بناءً على ما إذا كانت موجودة
   row.innerHTML = `
     <td>${sequence++}</td>
     <td>${data.date}</td>
@@ -14,18 +16,20 @@ function addInvoice(data) {
     <td>${data.tax}</td>
     <td>${data.totalAmount}</td>
     <td>${data.invoiceNumber}</td>
-    <td>${data.commercialName || ""}</td>
-    <td>${data.taxNumber || ""}</td>
+    <td>${data.commercialName ? data.commercialName : ""}</td>
+    <td>${data.taxNumber ? data.taxNumber : ""}</td>
     <td><button class="editRowButton">🖊</button></td>
   `;
   table.appendChild(row);
   invoices.push(data);
 }
 
+// أحداث الزر "إضافة باركود"
 document.getElementById("addBarcode").addEventListener("click", () => {
   document.getElementById("imageInput").click();
 });
 
+// حدث تغيير الصورة لاستخراج الباركود
 document.getElementById("imageInput").addEventListener("change", async (event) => {
   const file = event.target.files[0];
   if (file) {
@@ -37,6 +41,7 @@ document.getElementById("imageInput").addEventListener("change", async (event) =
   }
 });
 
+// حدث للزر "مسح الباركود"
 document.getElementById("scanBarcode").addEventListener("click", async () => {
   const scannerContainer = document.getElementById("scannerContainer");
   const video = document.getElementById("camera");
@@ -52,6 +57,7 @@ document.getElementById("scanBarcode").addEventListener("click", async () => {
   qrScanner.start();
 });
 
+// حدث للزر "حفظ"
 document.getElementById("saveButton").addEventListener("click", () => {
   const choice = confirm("هل تريد حفظ الملف كـ Excel؟ اضغط إلغاء لحفظه كـ PDF.");
   if (choice) {
@@ -61,18 +67,20 @@ document.getElementById("saveButton").addEventListener("click", () => {
   }
 });
 
+// دالة لحفظ الفواتير كـ Excel
 function saveAsExcel() {
   let csvContent = "data:text/csv;charset=utf-8,";
   csvContent += "تسلسل,التاريخ,قبل الضريبة,الضريبة,الإجمالي,رقم الفاتورة,الاسم التجاري,الرقم الضريبي\n";
   invoices.forEach((invoice) => {
-    csvContent += $;{sequence - 1}$
+    csvContent += $
+    {sequence - 1}$
     {invoice.date}$
     {invoice.amountBeforeTax}$
     {invoice.tax}$
     {invoice.totalAmount}$
     {invoice.invoiceNumber}$
-    {invoice.commercialName || ""}$
-    {invoice.taxNumber || ""}n;
+    {invoice.commercialName ? invoice.commercialName : ""}$
+    {invoice.taxNumber ? invoice.taxNumber : ""}n;
   });
 
   const link = document.createElement("a");
@@ -81,6 +89,7 @@ function saveAsExcel() {
   link.click();
 }
 
+// دالة لحفظ الفواتير كـ PDF
 function saveAsPDF() {
   const pdfContent = invoices.map((invoice) => {
     return `
@@ -101,20 +110,31 @@ function saveAsPDF() {
   link.click();
 }
 
+// دالة فك تشفير البيانات من QR Code
 function decodeInvoice(data) {
   try {
-    const decodedData = atob(data);
-    const parsedData = JSON.parse(decodedData);
+    const decodedData = atob(data); // فك تشفير البيانات من Base64
+    const parsedData = JSON.parse(decodedData); // تحويل النص إلى كائن JSON
 
-    return {
+    // التحقق من وجود البيانات الخاصة بالاسم التجاري والرقم الضريبي
+    const invoiceData = {
       date: parsedData.date || "غير متوفر",
       amountBeforeTax: parsedData.amountBeforeTax || "غير متوفر",
       tax: parsedData.tax || "غير متوفر",
       totalAmount: parsedData.totalAmount || "غير متوفر",
       invoiceNumber: parsedData.invoiceNumber || "غير متوفر",
-      commercialName: parsedData.commercialName || "",
-      taxNumber: parsedData.taxNumber || ""
     };
+
+    // إذا كانت البيانات الخاصة بالاسم التجاري أو الرقم الضريبي موجودة في الكود، أضفها
+    if (parsedData.commercialName) {
+      invoiceData.commercialName = parsedData.commercialName;
+    }
+    
+    if (parsedData.taxNumber) {
+      invoiceData.taxNumber = parsedData.taxNumber;
+    }
+
+    return invoiceData;
   } catch (error) {
     console.error("فشل في فك التشفير:", error);
     return {};
