@@ -19,24 +19,37 @@
             <div id="reader" style="width: 100%; height: 300px;"></div>
         </div>
 
-        <!-- Display the Invoice Data -->
+        <!-- Display the Invoice Data as Table -->
         <div id="invoice-data">
             <h2>تفاصيل الفاتورة</h2>
-            <ul>
-                <li>السلسل: <span id="serial-number"></span></li>
-                <li>الاسم التجاري: <span id="business-name"></span></li>
-                <li>الرقم الضريبي: <span id="tax-number"></span></li>
-                <li>التاريخ: <span id="date"></span></li>
-                <li>قبل الضريبة: <span id="before-tax"></span></li>
-                <li>الضريبة: <span id="tax"></span></li>
-                <li>الإجمالي: <span id="total"></span></li>
-                <li>رقم الفاتورة: <span id="invoice-number"></span></li>
-            </ul>
+            <table id="invoice-table">
+                <tr>
+                    <th>السلسل</th>
+                    <th>الاسم التجاري</th>
+                    <th>الرقم الضريبي</th>
+                    <th>التاريخ</th>
+                    <th>قبل الضريبة</th>
+                    <th>الضريبة</th>
+                    <th>الإجمالي</th>
+                    <th>رقم الفاتورة</th>
+                    <th>التحرير</th>
+                </tr>
+                <tr>
+                    <td id="serial-number">غير متوفر</td>
+                    <td id="business-name">غير متوفر</td>
+                    <td id="tax-number">غير متوفر</td>
+                    <td id="date">غير متوفر</td>
+                    <td id="before-tax">غير متوفر</td>
+                    <td id="tax">غير متوفر</td>
+                    <td id="total">غير متوفر</td>
+                    <td id="invoice-number">غير متوفر</td>
+                    <td><button id="edit-btn">🔧 تحرير</button></td>
+                </tr>
+            </table>
         </div>
 
-        <!-- Buttons for Edit, Save PDF, and Save Excel -->
-        <div id="actions">
-            <button id="edit-btn">🔧 تحرير</button>
+        <!-- Save Button -->
+        <div id="save-action">
             <button id="save-btn">💾 حفظ</button>
         </div>
     </div>
