@@ -54,29 +54,11 @@
       background-color: #f1f1f1;
     }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    h1 {
-      color: #4CAF50;
-      margin-bottom: 20px;
-    }
-
-    .button-container {
-      margin-top: 20px;
-    }
-
-    .file-input {
-      display: none;
-    }
-
     .scanner-container {
       position: relative;
       width: 100%;
       max-width: 600px;
-      margin: 20px auto;
+      margin: 0 auto;
       background-color: black;
     }
 
@@ -95,165 +77,104 @@
       border: 3px solid rgba(255, 255, 255, 0.8);
       box-sizing: border-box;
     }
-
-    .scanner-box::before {
-      content: 'ضع الباركود داخل المربع';
-      position: absolute;
-      top: -20px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: white;
-      font-size: 14px;
-      text-align: center;
-    }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div>
     <h1>📋 قارئ الفواتير</h1>
-
-    <div class="button-container">
-      <button id="scanBarcode">📸 تصوير باركود</button>
-      <button id="addBarcode">📁 إضافة باركود</button>
-      <input type="file" id="imageInput" class="file-input" accept="image/*">
-    </div>
-
+    <button id="scanBarcode">📸 تصوير باركود</button>
+    <button id="addBarcode">📁 إضافة باركود</button>
+    <input type="file" id="imageInput" style="display: none;" accept="image/*">
     <div class="scanner-container" id="scannerContainer" style="display: none;">
       <video id="camera"></video>
       <div class="scanner-box"></div>
     </div>
-
     <table>
       <thead>
         <tr>
-          <th>تسلسل</th>
           <th>الاسم التجاري</th>
           <th>الرقم الضريبي</th>
           <th>التاريخ</th>
           <th>قبل الضريبة</th>
           <th>الضريبة</th>
           <th>الإجمالي</th>
-          <th>رقم الفاتورة</th>
-          <th>إجراءات</th>
         </tr>
       </thead>
       <tbody id="invoiceTable">
-        <!-- البيانات ستضاف هنا -->
+        <!-- البيانات -->
       </tbody>
     </table>
-
-    <button id="saveButton">💾 حفظ</button>
   </div>
 
   <script type="module">
     import QrScanner from "https://unpkg.com/qr-scanner/qr-scanner.min.js";
 
-    let invoices = [];
-    let sequence = 1;
+    const scannerContainer = document.getElementById("scannerContainer");
+    const camera = document.getElementById("camera");
+    const imageInput = document.getElementById("imageInput");
+    const invoiceTable = document.getElementById("invoiceTable");
 
-    function addInvoice(data) {
-      const table = document.querySelector("#invoiceTable tbody");
-      const row = document.createElement("tr");
-
-      row.innerHTML = `
-        <td>${sequence++}</td>
-        <td contenteditable="false">${data.tradeName}</td>
-        <td contenteditable="false">${data.taxNumber}</td>
-        <td contenteditable="false">${data.date}</td>
-        <td contenteditable="false">${data.amountBeforeTax}</td>
-        <td contenteditable="false">${data.tax}</td>
-        <td contenteditable="false">${data.totalAmount}</td>
-        <td contenteditable="false">${data.invoiceNumber}</td>
-        <td><button class="editButton">🖊️ تحرير</button></td>
-      `;
-      table.appendChild(row);
-      invoices.push(data);
-    }
-
-    document.getElementById("addBarcode").addEventListener("click", () => {
-      document.getElementById("imageInput").click();
+    document.getElementById("scanBarcode").addEventListener("click", () => {
+      scannerContainer.style.display = "block";
+      const qrScanner = new QrScanner(camera, result => {
+        try {
+          const invoiceData = decodeInvoice(result.data);
+          addInvoiceToTable(invoiceData);
+          qrScanner.stop();
+          scannerContainer.style.display = "none";
+        } catch (error) {
+          alert("خطأ في قراءة البيانات: " + error.message);
+        }
+      });
+      qrScanner.start();
     });
 
-    document.getElementById("imageInput").addEventListener("change", async (event) => {
+    document.getElementById("addBarcode").addEventListener("click", () => {
+      imageInput.click();
+    });
+
+    imageInput.addEventListener("change", async (event) => {
       const file = event.target.files[0];
       if (file) {
-        const qrScanner = new QrScanner(file, (result) => {
-          const data = decodeInvoice(result.data);
-          addInvoice(data);
-        }, {
-          returnDetailedScanResult: true,
+        const qrScanner = new QrScanner(file, result => {
+          try {
+            const invoiceData = decodeInvoice(result.data);
+            addInvoiceToTable(invoiceData);
+          } catch (error) {
+            alert("خطأ في قراءة البيانات: " + error.message);
+          }
         });
         qrScanner.scan();
       }
     });
 
-    document.getElementById("scanBarcode").addEventListener("click", async () => {
-      const scannerContainer = document.getElementById("scannerContainer");
-      const video = document.getElementById("camera");
-      scannerContainer.style.display = "block";
-
-      const qrScanner = new QrScanner(video, (result) => {
-        const data = decodeInvoice(result.data);
-        addInvoice(data);
-        qrScanner.stop();
-        scannerContainer.style.display = "none";
-      });
-
-      qrScanner.start();
-    });
-
-    document.getElementById("saveButton").addEventListener("click", () => {
-      const choice = confirm("هل تريد حفظ الملف كـ Excel؟ اضغط إلغاء لحفظه كـ PDF.");
-      if (choice) {
-        saveAsExcel();
-      } else {
-        saveAsPDF();
+    function decodeInvoice(encodedData) {
+      const decodedData = atob(encodedData);
+      const fields = decodedData.split("|");
+      if (fields.length !== 6) {
+        throw new Error("تنسيق الفاتورة غير صحيح.");
       }
-    });
-
-    document.addEventListener("click", (event) => {
-      if (event.target.classList.contains("editButton")) {
-        const row = event.target.closest("tr");
-        row.querySelectorAll("td[contenteditable]").forEach((cell) => {
-          cell.contentEditable = cell.isContentEditable ? "false" : "true";
-        });
-        event.target.textContent = row.querySelector("td[contenteditable]").isContentEditable ? "✔️ حفظ" : "🖊️ تحرير";
-      }
-    });
-
-    function saveAsExcel() {
-      let csvContent = "data:text/csv;charset=utf-8,";
-      csvContent += "تسلسل,الاسم التجاري,الرقم الضريبي,التاريخ,قبل الضريبة,الضريبة,الإجمالي,رقم الفاتورة\n";
-      invoices.forEach((invoice) => {
-        csvContent += `${sequence - 1},${invoice.tradeName},${invoice.taxNumber},${invoice.date},${invoice.amountBeforeTax},${invoice.tax},${invoice.totalAmount},${invoice.invoiceNumber}\n`;
-      });
-
-      const link = document.createElement("a");
-      link.href = encodeURI(csvContent);
-      link.download = "invoices.csv";
-      link.click();
+      return {
+        tradeName: fields[0],
+        taxNumber: fields[1],
+        date: fields[2],
+        amountBeforeTax: fields[3],
+        tax: fields[4],
+        totalAmount: fields[5],
+      };
     }
 
-    function saveAsPDF() {
-      const pdfContent = invoices.map((invoice) => {
-        return `
-          الاسم التجاري: ${invoice.tradeName}
-          الرقم الضريبي: ${invoice.taxNumber}
-          التاريخ: ${invoice.date}
-          الإجمالي: ${invoice.totalAmount}
-        `;
-      }).join("\n\n");
-
-      const blob = new Blob([pdfContent], { type: "application/pdf" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "invoices.pdf";
-      link.click();
-    }
-
-    function decodeInvoice(data) {
-      const decodedData = atob(data); // فك تشفير Base64
-      return JSON.parse(decodedData);
+    function addInvoiceToTable(invoice) {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${invoice.tradeName}</td>
+        <td>${invoice.taxNumber}</td>
+        <td>${invoice.date}</td>
+        <td>${invoice.amountBeforeTax}</td>
+        <td>${invoice.tax}</td>
+        <td>${invoice.totalAmount}</td>
+      `;
+      invoiceTable.appendChild(row);
     }
   </script>
 </body>
