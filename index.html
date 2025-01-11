@@ -1,44 +1,260 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حاسبة الفواتير</title>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>قارئ الفواتير</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f9f9f9;
+      text-align: center;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 15px;
+      margin: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    table {
+      width: 90%;
+      margin: 20px auto;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    #invoiceTable tbody tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    #invoiceTable tbody tr:hover {
+      background-color: #f1f1f1;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: #4CAF50;
+      margin-bottom: 20px;
+    }
+
+    .button-container {
+      margin-top: 20px;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .scanner-container {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      margin: 20px auto;
+      background-color: black;
+    }
+
+    video {
+      width: 100%;
+      height: auto;
+    }
+
+    .scanner-box {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 250px;
+      height: 250px;
+      border: 3px solid rgba(255, 255, 255, 0.8);
+      box-sizing: border-box;
+    }
+
+    .scanner-box::before {
+      content: 'ضع الباركود داخل المربع';
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-size: 14px;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-    <!-- الصفحة الأولى -->
-    <div id="page1" class="page">
-        <div class="button-container">
-            <button id="camera-btn" onclick="openCamera()">تصوير QR 📸</button>
-            <button id="upload-btn" onclick="openFileDialog()">إضافة QR</button>
-            <button id="encode-btn" onclick="openBase64Input()">إضافة كود مشفر</button>
-        </div>
-        <div id="theme-toggle">
-            <button onclick="toggleTheme()">الوضع الداكن 🌙 / الوضع الساطع ☀</button>
-        </div>
+  <div class="container">
+    <h1>📋 قارئ الفواتير</h1>
+
+    <div class="button-container">
+      <button id="scanBarcode">📸 تصوير باركود</button>
+      <button id="addBarcode">📁 إضافة باركود</button>
+      <input type="file" id="imageInput" class="file-input" accept="image/*">
     </div>
 
-    <!-- الصفحة الثانية -->
-    <div id="page2" class="page" style="display: none;">
-        <button id="edit-btn" onclick="editTable()">تحرير الجدول</button>
-        <table id="invoice-table">
-            <thead>
-                <tr>
-                    <th>اسم البائع</th>
-                    <th>الرقم الضريبي</th>
-                    <th>تاريخ الفاتورة</th>
-                    <th>مبلغ الفاتورة مع الضريبة</th>
-                    <th>مبلغ الضريبة</th>
-                </tr>
-            </thead>
-            <tbody id="invoice-data">
-                <!-- بيانات الفاتورة ستظهر هنا -->
-            </tbody>
-        </table>
+    <div class="scanner-container" id="scannerContainer" style="display: none;">
+      <video id="camera"></video>
+      <div class="scanner-box"></div>
     </div>
 
-    <script src="script.js"></script>
+    <table>
+      <thead>
+        <tr>
+          <th>تسلسل</th>
+          <th>الاسم التجاري</th>
+          <th>الرقم الضريبي</th>
+          <th>التاريخ</th>
+          <th>قبل الضريبة</th>
+          <th>الضريبة</th>
+          <th>الإجمالي</th>
+          <th>رقم الفاتورة</th>
+          <th>إجراءات</th>
+        </tr>
+      </thead>
+      <tbody id="invoiceTable">
+        <!-- البيانات ستضاف هنا -->
+      </tbody>
+    </table>
+
+    <button id="saveButton">💾 حفظ</button>
+  </div>
+
+  <script type="module">
+    import QrScanner from "https://unpkg.com/qr-scanner/qr-scanner.min.js";
+
+    let invoices = [];
+    let sequence = 1;
+
+    function addInvoice(data) {
+      const table = document.querySelector("#invoiceTable tbody");
+      const row = document.createElement("tr");
+
+      row.innerHTML = `
+        <td>${sequence++}</td>
+        <td contenteditable="false">${data.tradeName}</td>
+        <td contenteditable="false">${data.taxNumber}</td>
+        <td contenteditable="false">${data.date}</td>
+        <td contenteditable="false">${data.amountBeforeTax}</td>
+        <td contenteditable="false">${data.tax}</td>
+        <td contenteditable="false">${data.totalAmount}</td>
+        <td contenteditable="false">${data.invoiceNumber}</td>
+        <td><button class="editButton">🖊️ تحرير</button></td>
+      `;
+      table.appendChild(row);
+      invoices.push(data);
+    }
+
+    document.getElementById("addBarcode").addEventListener("click", () => {
+      document.getElementById("imageInput").click();
+    });
+
+    document.getElementById("imageInput").addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const qrScanner = new QrScanner(file, (result) => {
+          const data = decodeInvoice(result.data);
+          addInvoice(data);
+        }, {
+          returnDetailedScanResult: true,
+        });
+        qrScanner.scan();
+      }
+    });
+
+    document.getElementById("scanBarcode").addEventListener("click", async () => {
+      const scannerContainer = document.getElementById("scannerContainer");
+      const video = document.getElementById("camera");
+      scannerContainer.style.display = "block";
+
+      const qrScanner = new QrScanner(video, (result) => {
+        const data = decodeInvoice(result.data);
+        addInvoice(data);
+        qrScanner.stop();
+        scannerContainer.style.display = "none";
+      });
+
+      qrScanner.start();
+    });
+
+    document.getElementById("saveButton").addEventListener("click", () => {
+      const choice = confirm("هل تريد حفظ الملف كـ Excel؟ اضغط إلغاء لحفظه كـ PDF.");
+      if (choice) {
+        saveAsExcel();
+      } else {
+        saveAsPDF();
+      }
+    });
+
+    document.addEventListener("click", (event) => {
+      if (event.target.classList.contains("editButton")) {
+        const row = event.target.closest("tr");
+        row.querySelectorAll("td[contenteditable]").forEach((cell) => {
+          cell.contentEditable = cell.isContentEditable ? "false" : "true";
+        });
+        event.target.textContent = row.querySelector("td[contenteditable]").isContentEditable ? "✔️ حفظ" : "🖊️ تحرير";
+      }
+    });
+
+    function saveAsExcel() {
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "تسلسل,الاسم التجاري,الرقم الضريبي,التاريخ,قبل الضريبة,الضريبة,الإجمالي,رقم الفاتورة\n";
+      invoices.forEach((invoice) => {
+        csvContent += `${sequence - 1},${invoice.tradeName},${invoice.taxNumber},${invoice.date},${invoice.amountBeforeTax},${invoice.tax},${invoice.totalAmount},${invoice.invoiceNumber}\n`;
+      });
+
+      const link = document.createElement("a");
+      link.href = encodeURI(csvContent);
+      link.download = "invoices.csv";
+      link.click();
+    }
+
+    function saveAsPDF() {
+      const pdfContent = invoices.map((invoice) => {
+        return `
+          الاسم التجاري: ${invoice.tradeName}
+          الرقم الضريبي: ${invoice.taxNumber}
+          التاريخ: ${invoice.date}
+          الإجمالي: ${invoice.totalAmount}
+        `;
+      }).join("\n\n");
+
+      const blob = new Blob([pdfContent], { type: "application/pdf" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "invoices.pdf";
+      link.click();
+    }
+
+    function decodeInvoice(data) {
+      const decodedData = atob(data); // فك تشفير Base64
+      return JSON.parse(decodedData);
+    }
+  </script>
 </body>
 </html>

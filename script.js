@@ -1,76 +1,109 @@
-// التبديل بين الوضع الداكن والساطع
-let darkMode = false;
+import QrScanner from "https://unpkg.com/qr-scanner/qr-scanner.min.js";
 
-function toggleTheme() {
-    darkMode = !darkMode;
-    document.body.classList.toggle('dark-mode', darkMode);
+let invoices = [];
+let sequence = 1;
+
+function addInvoice(data) {
+  const table = document.querySelector("#invoiceTable tbody");
+  const row = document.createElement("tr");
+
+  row.innerHTML = `
+    <td>${sequence++}</td>
+    <td contenteditable="false">${data.tradeName}</td>
+    <td contenteditable="false">${data.taxNumber}</td>
+    <td contenteditable="false">${data.date}</td>
+    <td contenteditable="false">${data.amountBeforeTax}</td>
+    <td contenteditable="false">${data.tax}</td>
+    <td contenteditable="false">${data.totalAmount}</td>
+    <td contenteditable="false">${data.invoiceNumber}</td>
+    <td><button class="editButton">🖊️ تحرير</button></td>
+  `;
+  table.appendChild(row);
+  invoices.push(data);
 }
 
-// فتح الكاميرا لقراءة QR
-function openCamera() {
-    alert('فتح الكاميرا لقراءة QR');
-    // إضافة الكود لفتح الكاميرا هنا
-    // عند قراءة QR، يتم الانتقال للصفحة الثانية ويعرض البيانات
-    goToPage2({
-        sellerName: 'شركة XYZ',
-        taxNumber: '123456789',
-        date: '2025-01-01',
-        totalAmount: '1000.00',
-        taxAmount: '150.00'
+document.getElementById("addBarcode").addEventListener("click", () => {
+  document.getElementById("imageInput").click();
+});
+
+document.getElementById("imageInput").addEventListener("change", async (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    const qrScanner = new QrScanner(file, (result) => {
+      const data = decodeInvoice(result.data);
+      addInvoice(data);
+    }, {
+      returnDetailedScanResult: true,
     });
-}
+    qrScanner.scan();
+  }
+});
 
-// رفع صورة QR
-function openFileDialog() {
-    alert('رفع صورة QR');
-    // إضافة الكود لتحميل صورة QR هنا
-    // عند قراءة QR، يتم الانتقال للصفحة الثانية ويعرض البيانات
-    goToPage2({
-        sellerName: 'شركة XYZ',
-        taxNumber: '123456789',
-        date: '2025-01-01',
-        totalAmount: '1000.00',
-        taxAmount: '150.00'
+document.getElementById("scanBarcode").addEventListener("click", async () => {
+  const scannerContainer = document.getElementById("scannerContainer");
+  const video = document.getElementById("camera");
+  scannerContainer.style.display = "block";
+
+  const qrScanner = new QrScanner(video, (result) => {
+    const data = decodeInvoice(result.data);
+    addInvoice(data);
+    qrScanner.stop();
+    scannerContainer.style.display = "none";
+  });
+
+  qrScanner.start();
+});
+
+document.getElementById("saveButton").addEventListener("click", () => {
+  const choice = confirm("هل تريد حفظ الملف كـ Excel؟ اضغط إلغاء لحفظه كـ PDF.");
+  if (choice) {
+    saveAsExcel();
+  } else {
+    saveAsPDF();
+  }
+});
+
+document.addEventListener("click", (event) => {
+  if (event.target.classList.contains("editButton")) {
+    const row = event.target.closest("tr");
+    row.querySelectorAll("td[contenteditable]").forEach((cell) => {
+      cell.contentEditable = cell.isContentEditable ? "false" : "true";
     });
+    event.target.textContent = row.querySelector("td[contenteditable]").isContentEditable ? "✔️ حفظ" : "🖊️ تحرير";
+  }
+});
+
+function saveAsExcel() {
+  let csvContent = "data:text/csv;charset=utf-8,";
+  csvContent += "تسلسل,الاسم التجاري,الرقم الضريبي,التاريخ,قبل الضريبة,الضريبة,الإجمالي,رقم الفاتورة\n";
+  invoices.forEach((invoice) => {
+    csvContent += `${sequence - 1},${invoice.tradeName},${invoice.taxNumber},${invoice.date},${invoice.amountBeforeTax},${invoice.tax},${invoice.totalAmount},${invoice.invoiceNumber}\n`;
+  });
+
+  const link = document.createElement("a");
+  link.href = encodeURI(csvContent);
+  link.download = "invoices.csv";
+  link.click();
 }
 
-// إدخال كود مشفر base64
-function openBase64Input() {
-    let code = prompt('أدخل كود base64');
-    alert('تم فك تشفير الكود: ' + code); // فك التشفير وعرض البيانات هنا
-    // عند فك التشفير، يتم الانتقال للصفحة الثانية ويعرض البيانات
-    goToPage2({
-        sellerName: 'شركة XYZ',
-        taxNumber: '123456789',
-        date: '2025-01-01',
-        totalAmount: '1000.00',
-        taxAmount: '150.00'
-    });
-}
-
-// الانتقال إلى الصفحة الثانية وعرض البيانات
-function goToPage2(data) {
-    document.getElementById('page1').style.display = 'none';
-    document.getElementById('page2').style.display = 'block';
-    populateInvoiceTable(data);
-}
-
-// إضافة بيانات الفاتورة للجدول
-function populateInvoiceTable(data) {
-    const table = document.getElementById('invoice-data');
-    table.innerHTML = `
-        <tr>
-            <td>${data.sellerName}</td>
-            <td>${data.taxNumber}</td>
-            <td>${data.date}</td>
-            <td>${data.totalAmount}</td>
-            <td>${data.taxAmount}</td>
-        </tr>
+function saveAsPDF() {
+  const pdfContent = invoices.map((invoice) => {
+    return `
+      الاسم التجاري: ${invoice.tradeName}
+      الرقم الضريبي: ${invoice.taxNumber}
+      التاريخ: ${invoice.date}
+      الإجمالي: ${invoice.totalAmount}
     `;
+  }).join("\n\n");
+
+  const blob = new Blob([pdfContent], { type: "application/pdf" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "invoices.pdf";
+  link.click();
 }
 
-// تحرير الجدول
-function editTable() {
-    alert('تم تفعيل وضع التحرير');
-    // إضافة الكود لتحرير البيانات في الجدول هنا
+function decodeInvoice(data) {
+  const decodedData = atob(data); // فك تشفير Base64
+  return JSON.parse(decodedData);
 }
